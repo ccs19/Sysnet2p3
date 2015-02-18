@@ -75,16 +75,17 @@ int ReadFileBySequenceNumber()
     printf(" Sequence Number: ");
     fflush(stdout);
     int result = scanf("%d", &sequenceNumber);
-    if( result > 0 && //Check for user input
-            sequenceNumber <= m_boardFile.count+1 || sequenceNumber > 0) //and Check if sequence number exists TODO update this logic when we decide how to count sequenceNumbers
+    if( result > 0                                    //Check that user input something
+            && sequenceNumber <= m_boardFile.count+1  //and sequence number exists//TODO update this logic when we decide how to count sequenceNumbers
+            && sequenceNumber > 0)                    //And sequence number greater than 0
     {
-        if(fseek(m_boardFile.file, ( (sequenceNumber-1) * MAX_MESSAGE_SIZE), SEEK_SET) == 0)// (file, offset(messagenumber * fixed message size), origin(SEEK_SET = beginning of file))
+        if(fseek(m_boardFile.file, ( (sequenceNumber-1 /*Sequences start at line 0*/) * MAX_MESSAGE_SIZE), SEEK_SET) == 0)
         {
             char messageToPrint[MAX_MESSAGE_SIZE],
                  beginXml[MAX_MESSAGE_SIZE],
                  messageToParse[MAX_MESSAGE_SIZE];
             fread(messageToParse, sizeof(char), MAX_MESSAGE_SIZE, m_boardFile.file); //Get string of data to parse
-            sprintf(beginXml, "<message n=%d>",  sequenceNumber);
+            sprintf(beginXml, "<message n = %d>",  sequenceNumber);
             XMLParser(beginXml, endXml, messageToParse, messageToPrint, MAX_MESSAGE_SIZE);
             printf("Message:\n%s", messageToPrint);
             return 1;
@@ -260,8 +261,8 @@ void PrintErrorMessage()
 
     @param begin           --      The expected beginning of an XML expression
     @param end             --      The expected ending of an XML expression
-    @param token           --      The token extracted from the expression
     @param clientMessage   --      Message to parse
+    @param token           --      The token extracted from the expression
     @param length          --      Size of token
     @return                --      1 on success, 0 on failure, -1 if token is too large to fit
  */
@@ -273,13 +274,14 @@ int XMLParser(  const char* beginXml,
         int tokenSize)
 {
     //~~~~~~~~~~~~~Local vars ~~~~~~~~~~~~~~~~~~~~~~~//
-    char tempString[strlen(clientMessage)];
+    int clientMessageLength = strlen(clientMessage);
+    int beginXmlLength = strlen(beginXml);
+    int endXmlLength = strlen(endXml);
+    char tempString[clientMessageLength];
     char *delimiter = NULL;
     int returnVal = 0;
     int i = 0;
     int foundDelimiter = 0;
-    int beginXmlLength = strlen(beginXml);
-    int endXmlLength = strlen(endXml);
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
     token[0] = '\0';
@@ -287,8 +289,8 @@ int XMLParser(  const char* beginXml,
     tempString[beginXmlLength] = '\0';
     if(strcmp(tempString, beginXml) == 0 ) //If beginXml is found
     {
-        memcpy(tempString, clientMessage, strlen(clientMessage)); //Copy entire clientMessage
-        for(i = 1; i < strlen(clientMessage); i++) //Check for valid delimiter here
+        memcpy(tempString, clientMessage, clientMessageLength); //Copy entire clientMessage
+        for(i = 1; i < clientMessageLength; i++) //Check for valid delimiter here
         {
             if(tempString[i] == '<')
             {
@@ -304,7 +306,7 @@ int XMLParser(  const char* beginXml,
                 returnVal = 0;
             else {
                 returnVal = 1;//Set valid return
-                char *tempToken = clientMessage + (strlen(beginXml)); //Set temporary token to end of starting delimiter
+                char *tempToken = clientMessage + beginXmlLength; //Set temporary token to end of starting delimiter
                 strtok(tempToken, "<");
                 if (strlen(tempToken) > tokenSize) returnVal = -1;              //If token is too large, return -1
                 else if (strcmp(tempToken, endXml) == 0) token[0] = '\0';       //Else if empty token found
