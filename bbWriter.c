@@ -17,7 +17,7 @@ BBFile m_boardFile;
 
 
 //Constants
- const int MAX_MESSAGE_SIZE = 1024;
+ const int MAX_MESSAGE_SIZE = 256;
  const char* endXml = "</message>";
 
 
@@ -82,11 +82,18 @@ int WriteFile()
     }
     else
     {
-        strcat(messageToWrite, tempBuffer);
-        strcat(messageToWrite, endXml);
-        fseek(m_boardFile.file, 0, SEEK_END); //Go to end of file
 
-        int result = fprintf(m_boardFile.file, "%*s", MAX_MESSAGE_SIZE, messageToWrite);
+        int messagePaddingLength = MAX_MESSAGE_SIZE - messageSize;  //Pad the end of message with spaces
+        char messagePad[MAX_MESSAGE_SIZE];
+        memset(messagePad, 0, MAX_MESSAGE_SIZE);
+        sprintf(messagePad, "%*s\n", messagePaddingLength-1, ""); //length minus 1 to account for \n
+
+        strcat(messageToWrite, messagePad);                     //Concat message to write with padding
+        strcat(messageToWrite, tempBuffer);                     //Message to write
+        strcat(messageToWrite, endXml);                         //And closing XML tag
+        fseek(m_boardFile.file, 0, SEEK_END);
+
+        int result = fprintf(m_boardFile.file, "%s\n", messageToWrite);
         if( result < 0 )
         {
             m_boardFile.lastError = WriteFailed;
@@ -94,6 +101,7 @@ int WriteFile()
         }
         else
         {
+
             return 1;
         }
     }
@@ -255,7 +263,7 @@ void InitBBFile()
 {
     m_boardFile.lastError = -1;
     m_boardFile.file = NULL;
-    m_boardFile.count = 5;
+    m_boardFile.count = 1;
 }
 
 
