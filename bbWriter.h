@@ -7,7 +7,8 @@ typedef enum
     WriteFailed,
     ReadFailed,
     PrintSequenceFailed,
-    InvalidBoardOption
+    InvalidBoardOption,
+    SeekFailed
 }ErrorCode;
 
 typedef struct{
@@ -23,9 +24,11 @@ typedef struct{
 
 int UpdateFile();
 int WriteFile();
-int ReadFile();
+int ReadFileBySequenceNumber();
 int PrintSequenceNumbers();
-int OpenFile(char*);
+int OpenFile(const char*);
 int PrintMenu();
 int GetOption();
 void PrintErrorMessage();
+int XMLParser(const char*, const char*, char*, char*, int);
+void InitBBFile();
