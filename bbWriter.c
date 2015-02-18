@@ -30,12 +30,14 @@ int main(int argc, const char* argv[])
     }
     else
     {
+        InitBBFile();
         if(0 == OpenFile(argv[1]))
         {
+
             printf("Failed to open file %s\n", argv[1]);
             return 0;
         } //Try to open file
-        InitBBFile();                        //init struct
+        //init struct
         while(PrintMenu());
     }
     return 0;
@@ -72,8 +74,9 @@ int ReadFileBySequenceNumber()
     int sequenceNumber;
     printf(" Sequence Number: ");
     fflush(stdout);
-    if( scanf("%d", &sequenceNumber) != 0 && //Check for user input
-            sequenceNumber < m_boardFile.count+1) //and Check if sequence number exists
+    int result = scanf("%d", &sequenceNumber);
+    if( result > 0 && //Check for user input
+            sequenceNumber <= m_boardFile.count+1 || sequenceNumber > 0) //and Check if sequence number exists TODO update this logic when we decide how to count sequenceNumbers
     {
         if(fseek(m_boardFile.file, ( (sequenceNumber-1) * MAX_MESSAGE_SIZE), SEEK_SET) == 0)// (file, offset(messagenumber * fixed message size), origin(SEEK_SET = beginning of file))
         {
