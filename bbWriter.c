@@ -1,3 +1,11 @@
+/*
+ * bbWriter.c
+ * Systems and Networks II
+ * Project 3
+ * Christopher Schneider & Brett Rowberry
+ *
+ */
+
 #include "bbWriter.h"
 
 
@@ -247,6 +255,7 @@ int GetOption() {
             case INVALID:
                 m_boardFile.lastError = InvalidBoardOption;
                 return 0;
+                break;
                 break;
             default:
                 break;
