@@ -3,5 +3,5 @@ project(sysnet2p3)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
-set(SOURCE_FILES client.c)
+set(SOURCE_FILES bbWriter.c)
 add_executable(sysnet2p3 ${SOURCE_FILES})
