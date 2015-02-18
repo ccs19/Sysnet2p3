@@ -5,6 +5,13 @@
 
 BBFile m_boardFile;
 
+//User options:
+#define WRITE '1'
+#define READ '2'
+#define LIST '3'
+#define EXIT '4'
+
+
 
 int main(int argc, const char* argv[])
 {
@@ -15,10 +22,9 @@ int main(int argc, const char* argv[])
     else
     {
         if(OpenFile(argv[1] == 0)) return 0; //Try to open file
-        PrintMenu();
-
+        InitBBFile();                        //init struct
+        while(PrintMenu());
     }
-    PrintMenu();
     return 0;
 }
 
@@ -27,8 +33,7 @@ int main(int argc, const char* argv[])
 //Return 1 on success, 0 on failure
 int UpdateFile()
 {
-
-
+    m_boardFile.lastError = UpdateFailed;
     return 0;
 }
 
@@ -37,15 +42,15 @@ int UpdateFile()
 //Return 1 on success, 0 on failure
 int WriteFile()
 {
-
+    m_boardFile.lastError = WriteFailed;
     return 0;
 }
 
 //Reads a line from file based on the sequence number
 //Return 1 on success, 0 on failure
-int ReadFile(int sequenceNumber)
+int ReadFile()
 {
-
+    m_boardFile.lastError = ReadFailed;
     return 0;
 }
 
@@ -54,7 +59,7 @@ int ReadFile(int sequenceNumber)
 //Returns 1 on success, 0 on failure
 int PrintSequenceNumbers()
 {
-
+    m_boardFile.lastError = PrintSequenceFailed;
     return 0;
 }
 
@@ -63,13 +68,12 @@ int PrintSequenceNumbers()
 //Returns 1 on success, 0 on failure
 int OpenFile(char* fileName)
 {
-
     m_boardFile.file = fopen(fileName, "rw");
     if(m_boardFile.file == NULL) return 0;
-    return 1;
+    return 0;
 }
 
-void PrintMenu()
+int PrintMenu()
 {
     printf(  "\n"
              "=====================================================================\n"
@@ -83,4 +87,65 @@ void PrintMenu()
              "             posted to the board\n"
              "4. exit   :  Closes the message board\n\n"
              "   Option : ");
+    int optionResult = GetOption();
+    if(0 == optionResult)           //If something failed
+    {
+        PrintErrorMessage();        //Print error
+    }
+    else if(EXIT == optionResult)   //If exit
+    {
+        return 0;
+    }
+    else
+    {
+        return 1;   //Otherwise, return and run again
+    }
+}
+
+//Returns 0 on error, EXIT
+int GetOption() {
+    char userOption;
+    userOption = getchar();
+    switch (userOption) {
+        case WRITE:
+            return WriteFile();
+            break;
+        case READ:
+            return ReadFile();
+            break;
+        case LIST:
+            return PrintSequenceNumbers();
+            break;
+        case EXIT:
+            return EXIT;
+            break;
+        default:
+            break;
+    }
+}
+
+void InitBBFile()
+{
+    m_boardFile.lastError = -1;
+    m_boardFile.file = NULL;
+    m_boardFile.count = 0;
+}
+
+void PrintErrorMessage()
+{
+
+    switch(m_boardFile.lastError)
+    {
+        case UpdateFailed:
+            break;
+        case WriteFailed:
+            break;
+        case ReadFailed:
+            break;
+        case PrintSequenceFailed:
+            break;
+        default:
+            break;
+    }
+
 }
