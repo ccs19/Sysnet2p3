@@ -74,7 +74,7 @@ int ReadFileBySequenceNumber()
     int sequenceNumber;
     printf(" Sequence Number: ");
     fflush(stdout);
-    int result = scanf("%d", &sequenceNumber);
+    int result = scanf("%d", &sequenceNumber); //TODO need to eat \n character
     if( result > 0                                    //Check that user input something
             && sequenceNumber <= m_boardFile.count+1  //and sequence number exists//TODO update this logic when we decide how to count sequenceNumbers
             && sequenceNumber > 0)                    //And sequence number greater than 0
@@ -86,7 +86,17 @@ int ReadFileBySequenceNumber()
                  messageToParse[MAX_MESSAGE_SIZE];
             fread(messageToParse, sizeof(char), MAX_MESSAGE_SIZE, m_boardFile.file); //Get string of data to parse
             sprintf(beginXml, "<message n = %d>",  sequenceNumber);
-            XMLParser(beginXml, endXml, messageToParse, messageToPrint, MAX_MESSAGE_SIZE);
+            int xmlResult = XMLParser(beginXml, endXml, messageToParse, messageToPrint, MAX_MESSAGE_SIZE);
+            if(xmlResult == 0)
+            {
+                m_boardFile.lastError = InvalidXMLSyntax;
+                return 0;
+            }
+            else if(xmlResult == -1)
+            {
+                m_boardFile.lastError = MessageBufferOverflow;
+                return 0;
+            }
             printf("Message:\n%s", messageToPrint);
             return 1;
         }
@@ -134,6 +144,7 @@ int OpenFile(const char* fileName)
 //otherwise returns 1
 int PrintMenu()
 {
+    m_boardFile.lastError = -1; //Reset error
     printf(  "\n"
              "=====================================================================\n"
              "|                      Bulletin Board Options                       |\n"
@@ -226,22 +237,28 @@ void PrintErrorMessage()
     switch(m_boardFile.lastError)
     {
         case UpdateFailed:
-            printf("Update failed\n");
+            printf("Update failed in UpdateFile()\n");
             break;
         case WriteFailed:
-            printf("Write failed\n");
+            printf("Write failed in WriteFile()\n");
             break;
         case ReadFailed:
-            printf("Read failed\n");
+            printf("Read failed in ReadFileBySequenceNumber()\n");
             break;
         case PrintSequenceFailed:
-            printf("Print sequence failed\n");
+            printf("Print sequence failed in PrintSequenceNumbers()\n");
             break;
         case InvalidBoardOption:
             printf("Invalid Bulletin Board Option\n");
             break;
         case SeekFailed:
-            printf("File seek operation failed\n");
+            printf("File seek operation failed in ReadFileBySequenceNumber()\n");
+            break;
+        case InvalidXMLSyntax:
+            printf("Invalid syntax for selected sequence number\n");
+            break;
+        case MessageBufferOverflow:
+            printf("Message buffer overflow. Message exceeds max size of %d\n", MAX_MESSAGE_SIZE);
             break;
         default:
             break;

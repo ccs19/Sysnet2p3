@@ -8,7 +8,9 @@ typedef enum
     ReadFailed,
     PrintSequenceFailed,
     InvalidBoardOption,
-    SeekFailed
+    SeekFailed,
+    InvalidXMLSyntax,
+    MessageBufferOverflow
 }ErrorCode;
 
 typedef struct{
