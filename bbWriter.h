@@ -6,7 +6,8 @@ typedef enum
     UpdateFailed,
     WriteFailed,
     ReadFailed,
-    PrintSequenceFailed
+    PrintSequenceFailed,
+    InvalidBoardOption
 }ErrorCode;
 
 typedef struct{
