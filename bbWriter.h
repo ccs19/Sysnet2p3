@@ -19,7 +19,8 @@ typedef enum
     SeekFailed,
     InvalidXMLSyntax,
     ReadMessageBufferOverflow,
-    WriteMessageBufferOverflow
+    WriteMessageBufferOverflow,
+    NoError
 }ErrorCode;
 
 typedef struct{
@@ -42,5 +43,5 @@ int PrintMenu();
 int GetOption();
 void PrintErrorMessage();
 int XMLParser(const char*, const char*, char*, char*, int);
-void InitBBFile();
+int InitBBFile();
 int EatInputUntilNewline();

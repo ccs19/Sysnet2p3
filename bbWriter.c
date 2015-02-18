@@ -38,15 +38,19 @@ int main(int argc, const char* argv[])
     }
     else
     {
-        InitBBFile();
-        if(0 == OpenFile(argv[1]))
+        if(0 == OpenFile(argv[1])) //Try to open file
         {
-
             printf("Failed to open file %s\n", argv[1]);
             return 0;
-        } //Try to open file
-        //init struct
+        }
+        if(InitBBFile() == 0) //Initialize BB File struct
+        {
+            PrintErrorMessage(); //This only fails if UpdateFile() fails
+            fflush(stdout);
+            return 0;
+        }
         while(PrintMenu());
+        fclose(m_boardFile.file); //Close file
     }
     return 0;
 }
@@ -55,11 +59,26 @@ int main(int argc, const char* argv[])
 
 
 //Updates file pointer to bottom of stream
-//Return 1 on success, 0 on failure
+//Return number of next message on success, 0 on failure
 int UpdateFile()
 {
-    m_boardFile.lastError = UpdateFailed;
-    return 0;
+    int count = 1;
+    if(fseek(m_boardFile.file, 0, SEEK_SET) == 0)
+    {
+        while (1)
+        {
+            fseek(m_boardFile.file, (count - 1) * MAX_MESSAGE_SIZE, SEEK_CUR);
+            if (feof(m_boardFile.file) == 0)
+                return count;
+            else
+                count++;
+        }
+    }
+    else
+        {
+            m_boardFile.lastError = UpdateFailed;
+            return 0;
+        }
 }
 
 
@@ -102,15 +121,14 @@ int WriteFile()
         messageToWrite[MAX_MESSAGE_SIZE-1] = '\0';              //Set end of message to null terminating
         fseek(m_boardFile.file, 0, SEEK_END);
 
-        int result = fprintf(m_boardFile.file, "%s\n", messageToWrite);
-        if( result < 0 )
+
+        if( fprintf(m_boardFile.file, "%s\n", messageToWrite) < 0 || UpdateFile() == 0 )
         {
             m_boardFile.lastError = WriteFailed;
             return 0;
         }
         else
         {
-
             return 1;
         }
     }
@@ -125,10 +143,10 @@ int ReadFileBySequenceNumber()
     int sequenceNumber;
     printf(" Sequence Number: ");
     fflush(stdout);
-    int result = scanf("%d", &sequenceNumber); //TODO need to eat \n character
+    int result = scanf("%d", &sequenceNumber);
     EatInputUntilNewline();
     if( result > 0                                    //Check that user input something
-            && sequenceNumber <= m_boardFile.count+1  //and sequence number exists//TODO update this logic when we decide how to count sequenceNumbers
+            && sequenceNumber < m_boardFile.count  //and sequence number exists//TODO update this logic when we decide how to count sequenceNumbers
             && sequenceNumber > 0)                    //And sequence number greater than 0
     {
         if(fseek(m_boardFile.file, ( (sequenceNumber-1) /*Sequences start at line 0*/ * MAX_MESSAGE_SIZE), SEEK_SET) == 0)
@@ -172,8 +190,23 @@ int ReadFileBySequenceNumber()
 //Returns 1 on success, 0 on failure
 int PrintSequenceNumbers()
 {
-    m_boardFile.lastError = PrintSequenceFailed;
-    return 0;
+
+    m_boardFile.count = UpdateFile();
+    if(m_boardFile.count == 0)
+    {
+        m_boardFile.lastError = PrintSequenceFailed;
+        return 0;
+    }
+
+
+    int i;
+    printf("Sequence Numbers Available:\n");
+    for(i = 0; i < m_boardFile.count+1; i++)
+    {
+        printf("%d\n",i+1 );
+    }
+    fflush(stdout);
+    return 1;
 }
 
 
@@ -196,7 +229,7 @@ int OpenFile(const char* fileName)
 //otherwise returns 1
 int PrintMenu()
 {
-    m_boardFile.lastError = -1; //Reset error
+    m_boardFile.lastError = NoError; //Reset error
     printf(  "\n"
              "=====================================================================\n"
              "|                      Bulletin Board Options                       |\n"
@@ -223,7 +256,7 @@ int PrintMenu()
     {
         return 1;   //Otherwise, return and run again
     }
-    return 0;
+    return 1;
 }
 
 
@@ -246,7 +279,7 @@ int GetOption() {
                 return WriteFile();
                 break;
             case READ:
-                return ReadFileBySequenceNumber();
+                return ReadFileBySequenceNumber(); //TODO Read should be trigger by user input "read n"
                 break;
             case LIST:
                 return PrintSequenceNumbers();
@@ -257,7 +290,6 @@ int GetOption() {
             case INVALID:
                 m_boardFile.lastError = InvalidBoardOption;
                 return 0;
-                break;
                 break;
             default:
                 break;
@@ -270,11 +302,11 @@ int GetOption() {
 
 
 
-void InitBBFile()
+int InitBBFile()
 {
-    m_boardFile.lastError = -1;
-    m_boardFile.file = NULL;
-    m_boardFile.count = 1;
+    m_boardFile.lastError = NoError;
+    m_boardFile.count = UpdateFile();
+    return m_boardFile.count;
 }
 
 
