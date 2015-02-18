@@ -86,11 +86,12 @@ int WriteFile()
         int messagePaddingLength = MAX_MESSAGE_SIZE - messageSize;  //Pad the end of message with spaces
         char messagePad[MAX_MESSAGE_SIZE];
         memset(messagePad, 0, MAX_MESSAGE_SIZE);
-        sprintf(messagePad, "%*s\n", messagePaddingLength-1, ""); //length minus 1 to account for \n
+        sprintf(messagePad, "%*s\n", messagePaddingLength-2, ""); //length minus 2 to account for \n and \0
 
         strcat(messageToWrite, messagePad);                     //Concat message to write with padding
         strcat(messageToWrite, tempBuffer);                     //Message to write
         strcat(messageToWrite, endXml);                         //And closing XML tag
+        messageToWrite[MAX_MESSAGE_SIZE-1] = '\0';              //Set end of message to null terminating
         fseek(m_boardFile.file, 0, SEEK_END);
 
         int result = fprintf(m_boardFile.file, "%s\n", messageToWrite);
@@ -117,6 +118,7 @@ int ReadFileBySequenceNumber()
     printf(" Sequence Number: ");
     fflush(stdout);
     int result = scanf("%d", &sequenceNumber); //TODO need to eat \n character
+    EatInputUntilNewline();
     if( result > 0                                    //Check that user input something
             && sequenceNumber <= m_boardFile.count+1  //and sequence number exists//TODO update this logic when we decide how to count sequenceNumbers
             && sequenceNumber > 0)                    //And sequence number greater than 0
