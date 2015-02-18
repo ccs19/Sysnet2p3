@@ -25,7 +25,7 @@ typedef enum
 
 typedef struct{
     FILE* file;
-    int count;          //Current message counter.
+    int messageCount;          //Current message counter.
                         //Idea! Send message counter across hosts to check for
                         //file changes
     ErrorCode lastError; //If an error is encountered, this is set

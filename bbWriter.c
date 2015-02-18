@@ -13,6 +13,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+
+//Globals
 BBFile m_boardFile;
 
 //User options:
@@ -29,7 +31,15 @@ BBFile m_boardFile;
  const char* endXml = "</message>";
 
 
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*  FUNCTION: main
 
+    Accepts a file in argv[1]
+
+    @param argc         --  number of args
+    @param argv         --  arg vector
+ */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int main(int argc, const char* argv[])
 {
     if(argc < 2 || argc > 2)
@@ -57,7 +67,14 @@ int main(int argc, const char* argv[])
 
 
 
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*  FUNCTION: UpdateFile
 
+    Reads the file and updates the message messageCount variable.
+
+    @return     -- On failure, lastError is set and 0 returned. On success, returns 1
+ */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 //Updates file pointer to bottom of stream
 //Return number of next message on success, 0 on failure
 int UpdateFile()
@@ -83,7 +100,14 @@ int UpdateFile()
 
 
 
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*  FUNCTION: WriteFile
 
+    Accepts a message on stdin and writes message to message file
+
+    @return     -- On failure, lastError is set and 0 returned. On success, returns 1
+ */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 //Writes to file
 //Return 1 on success, 0 on failure
 int WriteFile()
@@ -97,7 +121,7 @@ int WriteFile()
     //=========================================================================================//
 
 
-    sprintf(messageToWrite, "<message n = %d>", m_boardFile.count++);
+    sprintf(messageToWrite, "<message n = %d>", m_boardFile.messageCount++);
     messageSize += strlen(messageToWrite) + strlen(endXml);
     fgets(tempBuffer, MAX_MESSAGE_SIZE, stdin);             //Get user message here
     messageSize += strlen(tempBuffer);
@@ -135,9 +159,14 @@ int WriteFile()
 }
 
 
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*  FUNCTION: ReadFileBySequenceNumber
 
-//Reads a line from file based on the sequence number
-//Return 1 on success, 0 on failure
+    Reads and prints a message based on sequence number.
+
+    @return     -- On failure, lastError is set and 0 returned. On success, returns 1
+ */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int ReadFileBySequenceNumber()
 {
     int sequenceNumber;
@@ -146,7 +175,7 @@ int ReadFileBySequenceNumber()
     int result = scanf("%d", &sequenceNumber);
     EatInputUntilNewline();
     if( result > 0                                    //Check that user input something
-            && sequenceNumber < m_boardFile.count  //and sequence number exists//TODO update this logic when we decide how to count sequenceNumbers
+            && sequenceNumber < m_boardFile.messageCount  //and sequence number exists//TODO update this logic when we decide how to messageCount sequenceNumbers
             && sequenceNumber > 0)                    //And sequence number greater than 0
     {
         if(fseek(m_boardFile.file, ( (sequenceNumber-1) /*Sequences start at line 0*/ * MAX_MESSAGE_SIZE), SEEK_SET) == 0)
@@ -185,14 +214,21 @@ int ReadFileBySequenceNumber()
 
 
 
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*  FUNCTION: PrintSequenceNumbers
 
+    Prints the available sequence numbers found in the file
+
+    @return     -- On failure, lastError is set and 0 returned. On success, returns 1
+ */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 //Prints sequence numbers available from 1-n
 //Returns 1 on success, 0 on failure
 int PrintSequenceNumbers()
 {
 
-    m_boardFile.count = UpdateFile();
-    if(m_boardFile.count == 0)
+    m_boardFile.messageCount = UpdateFile();
+    if(m_boardFile.messageCount == 0)
     {
         m_boardFile.lastError = PrintSequenceFailed;
         return 0;
@@ -201,7 +237,7 @@ int PrintSequenceNumbers()
 
     int i;
     printf("Sequence Numbers Available:\n");
-    for(i = 0; i < m_boardFile.count+1; i++)
+    for(i = 0; i < m_boardFile.messageCount +1; i++)
     {
         printf("%d\n",i+1 );
     }
@@ -211,7 +247,14 @@ int PrintSequenceNumbers()
 
 
 
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*  FUNCTION: OpenFile
 
+    Opens the bulletin board file
+
+    @return 0 on failure, 1 on success
+ */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 //Opens file for R/W operations
 //Returns 1 on success, 0 on failure
 int OpenFile(const char* fileName)
@@ -223,7 +266,14 @@ int OpenFile(const char* fileName)
 
 
 
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*  FUNCTION: PrintMenu
 
+    Prints the BB bulletin board menu and resets lastError
+
+    @return     --  Returns 0 when user requests exit, else 1
+ */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 //Prints the BB Menu
 //Returns 0 when user requests exit
 //otherwise returns 1
@@ -261,7 +311,14 @@ int PrintMenu()
 
 
 
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*  FUNCTION: GetOption
 
+    Gets and parses the user's option.
+
+    @return     --      EXIT if user selects exit, 0 on error
+ */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 //Returns 0 on error
 //Returns EXIT if option 4 is selected
 int GetOption() {
@@ -301,19 +358,34 @@ int GetOption() {
 
 
 
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*  FUNCTION: InitBBFile
 
+    Initializes the m_boardFile struct and sets the number of messages
+    already present in the file we're writing to
+
+    @return     --  Number of messages in file or 0 if failure
+ */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int InitBBFile()
 {
     m_boardFile.lastError = NoError;
-    m_boardFile.count = UpdateFile();
-    return m_boardFile.count;
+    m_boardFile.messageCount = UpdateFile();
+    return m_boardFile.messageCount;
 }
 
 
 
 
 
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*  FUNCTION: PrintErrorMessage
 
+    Prints an error message if m_boardFile.lastError is set
+
+    @return void
+ */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 void PrintErrorMessage()
 {
     printf("\nERROR:  ");
@@ -345,6 +417,8 @@ void PrintErrorMessage()
             break;
         case WriteMessageBufferOverflow:
             printf("Write message buffer overflow. Message write request exceeds max size of %d\n", MAX_MESSAGE_SIZE);
+            break;
+        case NoError:
             break;
         default:
             break;
@@ -420,8 +494,14 @@ int XMLParser(  const char* beginXml,
     return returnVal;
 }
 
-//NOM NOMs all user input until a newline is found.
-//Returns the number of characters ate
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*  FUNCTION: EatInputUntilNewLine
+
+    Calls getchar until a newline is found
+    @return number of characters consumed
+ */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int EatInputUntilNewline()
 {
     int charCount = 0;
