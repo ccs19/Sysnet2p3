@@ -10,7 +10,8 @@ typedef enum
     InvalidBoardOption,
     SeekFailed,
     InvalidXMLSyntax,
-    MessageBufferOverflow
+    ReadMessageBufferOverflow,
+    WriteMessageBufferOverflow
 }ErrorCode;
 
 typedef struct{
@@ -34,3 +35,4 @@ int GetOption();
 void PrintErrorMessage();
 int XMLParser(const char*, const char*, char*, char*, int);
 void InitBBFile();
+int EatInputUntilNewline();

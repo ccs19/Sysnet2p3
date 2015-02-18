@@ -61,8 +61,42 @@ int UpdateFile()
 //Return 1 on success, 0 on failure
 int WriteFile()
 {
-    m_boardFile.lastError = WriteFailed;
-    return 0;
+    //=========================================================================================//
+    char messageToWrite[MAX_MESSAGE_SIZE];          //Message to be written to BB
+    char tempBuffer[MAX_MESSAGE_SIZE];              //Buffer to hold message temporarily to avoid overflow
+    int messageSize = 0;                            //Size of message
+    memset(messageToWrite, 0, MAX_MESSAGE_SIZE);
+    memset(tempBuffer,0,MAX_MESSAGE_SIZE);
+    //=========================================================================================//
+
+
+    sprintf(messageToWrite, "<message n = %d>", m_boardFile.count++);
+    messageSize += strlen(messageToWrite) + strlen(endXml);
+    fgets(tempBuffer, MAX_MESSAGE_SIZE, stdin);             //Get user message here
+    messageSize += strlen(tempBuffer);
+
+    if(messageSize > MAX_MESSAGE_SIZE-1)                      //If user message + XML tags cause overflow
+    {
+        m_boardFile.lastError = WriteMessageBufferOverflow;
+        return 0;
+    }
+    else
+    {
+        strcat(messageToWrite, tempBuffer);
+        strcat(messageToWrite, endXml);
+        fseek(m_boardFile.file, 0, SEEK_END); //Go to end of file
+
+        int result = fprintf(m_boardFile.file, "%*s", MAX_MESSAGE_SIZE, messageToWrite);
+        if( result < 0 )
+        {
+            m_boardFile.lastError = WriteFailed;
+            return 0;
+        }
+        else
+        {
+            return 1;
+        }
+    }
 }
 
 
@@ -79,7 +113,7 @@ int ReadFileBySequenceNumber()
             && sequenceNumber <= m_boardFile.count+1  //and sequence number exists//TODO update this logic when we decide how to count sequenceNumbers
             && sequenceNumber > 0)                    //And sequence number greater than 0
     {
-        if(fseek(m_boardFile.file, ( (sequenceNumber-1 /*Sequences start at line 0*/) * MAX_MESSAGE_SIZE), SEEK_SET) == 0)
+        if(fseek(m_boardFile.file, ( (sequenceNumber-1) /*Sequences start at line 0*/ * MAX_MESSAGE_SIZE), SEEK_SET) == 0)
         {
             char messageToPrint[MAX_MESSAGE_SIZE],
                  beginXml[MAX_MESSAGE_SIZE],
@@ -87,14 +121,14 @@ int ReadFileBySequenceNumber()
             fread(messageToParse, sizeof(char), MAX_MESSAGE_SIZE, m_boardFile.file); //Get string of data to parse
             sprintf(beginXml, "<message n = %d>",  sequenceNumber);
             int xmlResult = XMLParser(beginXml, endXml, messageToParse, messageToPrint, MAX_MESSAGE_SIZE);
-            if(xmlResult == 0)
+            if(xmlResult == 0)           //If invalid message in file
             {
                 m_boardFile.lastError = InvalidXMLSyntax;
                 return 0;
             }
-            else if(xmlResult == -1)
+            else if(xmlResult == -1)    //If message too large
             {
-                m_boardFile.lastError = MessageBufferOverflow;
+                m_boardFile.lastError = ReadMessageBufferOverflow;
                 return 0;
             }
             printf("Message:\n%s", messageToPrint);
@@ -131,7 +165,7 @@ int PrintSequenceNumbers()
 //Returns 1 on success, 0 on failure
 int OpenFile(const char* fileName)
 {
-    m_boardFile.file = fopen(fileName, "rw");
+    m_boardFile.file = fopen(fileName, "a+");
     if(NULL == m_boardFile.file) return 0;
     return 1;
 }
@@ -184,33 +218,31 @@ int GetOption() {
 
     userOption = getchar();
 
-    while(getchar() != '\n')//Consume newline
+    if(charCount + EatInputUntilNewline() > 2)
     {
-        if(++charCount >= 2) //check for input of more than two characters
-            userOption = INVALID;
+        userOption = INVALID;
     }
-
-    switch (userOption)
-    {                   //Breaks not needed. TODO: remove later
-        case WRITE:
-            return WriteFile();
-            break;
-        case READ:
-            return ReadFileBySequenceNumber();
-            break;
-        case LIST:
-            return PrintSequenceNumbers();
-            break;
-        case EXIT:
-            return EXIT;
-            break;
-        case INVALID:
-            m_boardFile.lastError = InvalidBoardOption;
-            return 0;
-            break;
-        default:
-            break;
-    }
+        switch (userOption)
+        {                   //Breaks not needed. TODO: remove later
+            case WRITE:
+                return WriteFile();
+                break;
+            case READ:
+                return ReadFileBySequenceNumber();
+                break;
+            case LIST:
+                return PrintSequenceNumbers();
+                break;
+            case EXIT:
+                return EXIT;
+                break;
+            case INVALID:
+                m_boardFile.lastError = InvalidBoardOption;
+                return 0;
+                break;
+            default:
+                break;
+        }
     return 0;
 }
 
@@ -257,8 +289,11 @@ void PrintErrorMessage()
         case InvalidXMLSyntax:
             printf("Invalid syntax for selected sequence number\n");
             break;
-        case MessageBufferOverflow:
-            printf("Message buffer overflow. Message exceeds max size of %d\n", MAX_MESSAGE_SIZE);
+        case ReadMessageBufferOverflow:
+            printf("Read message buffer overflow. Message read exceeds max size of %d\n", MAX_MESSAGE_SIZE);
+            break;
+        case WriteMessageBufferOverflow:
+            printf("Write message buffer overflow. Message write request exceeds max size of %d\n", MAX_MESSAGE_SIZE);
             break;
         default:
             break;
@@ -332,4 +367,16 @@ int XMLParser(  const char* beginXml,
         }
     }
     return returnVal;
+}
+
+//NOM NOMs all user input until a newline is found.
+//Returns the number of characters ate
+int EatInputUntilNewline()
+{
+    int charCount = 0;
+    while(getchar() != '\n')//Consume newline
+    {
+        charCount++;
+    }
+    return charCount;
 }
