@@ -36,7 +36,7 @@ typedef struct{
 
 int UpdateFile();
 int WriteFile();
-int ReadFileBySequenceNumber();
+int ReadFileBySequenceNumber(int);
 int PrintSequenceNumbers();
 int OpenFile(const char*);
 int PrintMenu();
@@ -45,3 +45,4 @@ void PrintErrorMessage();
 int XMLParser(const char*, const char*, char*, char*, int);
 int InitBBFile();
 int EatInputUntilNewline();
+int ParseUserOption(int*);

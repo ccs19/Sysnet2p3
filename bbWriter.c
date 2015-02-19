@@ -29,7 +29,9 @@ BBFile m_boardFile;
 //Constants
  const int MAX_MESSAGE_SIZE = 256;
  const char* endXml = "</message>";
-
+ const int READ_STRING_LENGTH = 4; //Length of read string
+ const int READ_SPACE = 4;         //Array index of where we expect a space to be
+ const int READ_SEQUENCE_NUMBER = 5;        //Array index of where we expect the sequence number to be
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: main
@@ -145,8 +147,8 @@ int WriteFile()
         messageToWrite[MAX_MESSAGE_SIZE-1] = '\0';              //Set end of message to null terminating
         fseek(m_boardFile.file, 0, SEEK_END);
 
-
-        if( fprintf(m_boardFile.file, "%s\n", messageToWrite) < 0 || UpdateFile() == 0 )
+        m_boardFile.messageCount = UpdateFile();
+        if( fprintf(m_boardFile.file, "%s\n", messageToWrite) < 0 || m_boardFile.messageCount == 0 )
         {
             m_boardFile.lastError = WriteFailed;
             return 0;
@@ -167,15 +169,10 @@ int WriteFile()
     @return     -- On failure, lastError is set and 0 returned. On success, returns 1
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-int ReadFileBySequenceNumber()
+int ReadFileBySequenceNumber(int sequenceNumber)
 {
-    int sequenceNumber;
-    printf(" Sequence Number: ");
-    fflush(stdout);
-    int result = scanf("%d", &sequenceNumber);
-    EatInputUntilNewline();
-    if( result > 0                                    //Check that user input something
-            && sequenceNumber < m_boardFile.messageCount  //and sequence number exists//TODO update this logic when we decide how to messageCount sequenceNumbers
+    m_boardFile.messageCount = UpdateFile();
+    if(sequenceNumber < m_boardFile.messageCount  //Check sequence number exists
             && sequenceNumber > 0)                    //And sequence number greater than 0
     {
         if(fseek(m_boardFile.file, ( (sequenceNumber-1) /*Sequences start at line 0*/ * MAX_MESSAGE_SIZE), SEEK_SET) == 0)
@@ -222,8 +219,6 @@ int ReadFileBySequenceNumber()
     @return     -- On failure, lastError is set and 0 returned. On success, returns 1
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-//Prints sequence numbers available from 1-n
-//Returns 1 on success, 0 on failure
 int PrintSequenceNumbers()
 {
 
@@ -322,32 +317,23 @@ int PrintMenu()
 //Returns 0 on error
 //Returns EXIT if option 4 is selected
 int GetOption() {
-    int userOption, charCount = 1;
+    int userOption = 0, readOption = 0;
 
-    userOption = getchar();
+    readOption = ParseUserOption(&userOption);
 
-    if(charCount + EatInputUntilNewline() > 2)
-    {
-        userOption = INVALID;
-    }
         switch (userOption)
-        {                   //Breaks not needed. TODO: remove later
+        {
             case WRITE:
                 return WriteFile();
-                break;
             case READ:
-                return ReadFileBySequenceNumber(); //TODO Read should be trigger by user input "read n"
-                break;
+                return ReadFileBySequenceNumber(readOption);
             case LIST:
                 return PrintSequenceNumbers();
-                break;
             case EXIT:
                 return EXIT;
-                break;
             case INVALID:
                 m_boardFile.lastError = InvalidBoardOption;
                 return 0;
-                break;
             default:
                 break;
         }
@@ -510,4 +496,51 @@ int EatInputUntilNewline()
         charCount++;
     }
     return charCount;
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*  FUNCTION: ParseUserOption
+
+    Parses the user's selection and sets the userOption
+
+    @param userOption  --  The user option to be set
+    @return            --  The sequence number to read if read option is selected, else returns 0
+ */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+int ParseUserOption(int* userOption)
+{
+    char userOptionString[MAX_MESSAGE_SIZE];
+    memset(userOptionString, 0, MAX_MESSAGE_SIZE);
+    fgets(userOptionString, MAX_MESSAGE_SIZE, stdin);   //Get string of data to parse
+    userOptionString[strlen(userOptionString)-1] = '\0';  //And null terminate string
+
+    if(strcmp(userOptionString, "write") == 0)
+    {
+        *userOption = WRITE;
+    }
+    else if(strcmp(userOptionString, "list") == 0)
+    {
+        *userOption = LIST;
+    }
+    else if(strcmp(userOptionString, "exit") == 0)
+    {
+        *userOption = EXIT;
+    }
+    else //Else find out if we're reading.
+    {
+        char readOption[MAX_MESSAGE_SIZE];
+        strcpy(readOption, userOptionString);
+        readOption[READ_STRING_LENGTH] = '\0';   //Set strlen to 4 for "read"
+        if(strcmp(readOption, "read") != 0 || userOptionString[READ_SPACE] != ' ')  //If not read OR if no space is present in the option, e.g. read6
+        {
+            *userOption = INVALID;
+        }
+        else
+        {
+            char* readSequenceNumber = userOptionString+READ_SEQUENCE_NUMBER;
+            *userOption = READ;
+            return  atoi(readSequenceNumber);
+        }
+    }
+    return 0;
 }
