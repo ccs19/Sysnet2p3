@@ -6,6 +6,22 @@
  *
  */
 
+/*
 
+token{
+recvtoken()
+unlock A
+B
+lock A
+sendToken
+}
+
+writer{
+A
+lockB
+write()
+unlockB
+}
+ */
 
 
