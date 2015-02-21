@@ -28,10 +28,11 @@ BBFile m_boardFile;
 
 //Constants
  const int MAX_MESSAGE_SIZE = 256;
- const char* endXml = "</message>";
+ const char* endXml = "</message>\n";
  const int READ_STRING_LENGTH = 4; //Length of read string
  const int READ_SPACE = 4;         //Array index of where we expect a space to be
  const int READ_SEQUENCE_NUMBER = 5;        //Array index of where we expect the sequence number to be
+ const int SPECIAL_CHARACTER_COUNT = 4; //Number of special characters in message
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: main
@@ -72,7 +73,7 @@ int main(int argc, const char* argv[])
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: UpdateFile
 
-    Reads the file and updates the message messageCount variable.
+    Reads the file and updates the message nextMessageNumber variable.
 
     @return     -- On failure, lastError is set and 0 returned. On success, returns 1
  */
@@ -82,15 +83,20 @@ int main(int argc, const char* argv[])
 int UpdateFile()
 {
     int count = 1;
-    if(fseek(m_boardFile.file, 0, SEEK_SET) == 0)
+    if(fseek(m_boardFile.file, 0, SEEK_SET) == 0)                               //set fp to beginning of file
     {
         while (1)
         {
             fseek(m_boardFile.file, (count - 1) * MAX_MESSAGE_SIZE, SEEK_CUR);
-            if (feof(m_boardFile.file) == 0)
+            char temp = fgetc(m_boardFile.file);                                //Get char and force EOF to trigger
+
+            if (feof(m_boardFile.file) != 0)
                 return count;
             else
+            {
                 count++;
+                ungetc(temp, m_boardFile.file);                                 //Since we didn't find EOF, put char back
+            }
         }
     }
     else
@@ -122,33 +128,29 @@ int WriteFile()
     memset(tempBuffer,0,MAX_MESSAGE_SIZE);
     //=========================================================================================//
 
-
-    sprintf(messageToWrite, "<message n = %d>", m_boardFile.messageCount++);
+    m_boardFile.nextMessageNumber = UpdateFile();
+    sprintf(messageToWrite, "<message n = %d>", m_boardFile.nextMessageNumber);
     messageSize += strlen(messageToWrite) + strlen(endXml);
     fgets(tempBuffer, MAX_MESSAGE_SIZE, stdin);             //Get user message here
     messageSize += strlen(tempBuffer);
 
-    if(messageSize > MAX_MESSAGE_SIZE-1)                      //If user message + XML tags cause overflow
+    if(messageSize > MAX_MESSAGE_SIZE)                      //check for message buffer overflow
     {
         m_boardFile.lastError = WriteMessageBufferOverflow;
         return 0;
     }
     else
     {
-
-        int messagePaddingLength = MAX_MESSAGE_SIZE - messageSize;  //Pad the end of message with spaces
+        int messagePaddingLength = MAX_MESSAGE_SIZE - messageSize - 1  ;  //Pad the end of message with spaces
         char messagePad[MAX_MESSAGE_SIZE];
         memset(messagePad, 0, MAX_MESSAGE_SIZE);
-        sprintf(messagePad, "%*s\n", messagePaddingLength-2, ""); //length minus 2 to account for \n and \0
-
-        strcat(messageToWrite, messagePad);                     //Concat message to write with padding
-        strcat(messageToWrite, tempBuffer);                     //Message to write
-        strcat(messageToWrite, endXml);                         //And closing XML tag
-        messageToWrite[MAX_MESSAGE_SIZE-1] = '\0';              //Set end of message to null terminating
+        sprintf(messagePad, "%*s\n", messagePaddingLength, "");   //length minus 4 to account for three newlines and \0
+        strcat(messageToWrite, messagePad);                         //Concat message to write with padding
+        strcat(messageToWrite, tempBuffer);                         //Message to write
+        strcat(messageToWrite, endXml);                             //And closing XML tag
         fseek(m_boardFile.file, 0, SEEK_END);
 
-        m_boardFile.messageCount = UpdateFile();
-        if( fprintf(m_boardFile.file, "%s\n", messageToWrite) < 0 || m_boardFile.messageCount == 0 )
+        if( fprintf(m_boardFile.file, "%s", messageToWrite) < 0 || m_boardFile.nextMessageNumber == 0 )
         {
             m_boardFile.lastError = WriteFailed;
             return 0;
@@ -171,8 +173,8 @@ int WriteFile()
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int ReadFileBySequenceNumber(int sequenceNumber)
 {
-    m_boardFile.messageCount = UpdateFile();
-    if(sequenceNumber < m_boardFile.messageCount  //Check sequence number exists
+    m_boardFile.nextMessageNumber = UpdateFile();
+    if(sequenceNumber < m_boardFile.nextMessageNumber      //Check sequence number exists
             && sequenceNumber > 0)                    //And sequence number greater than 0
     {
         if(fseek(m_boardFile.file, ( (sequenceNumber-1) /*Sequences start at line 0*/ * MAX_MESSAGE_SIZE), SEEK_SET) == 0)
@@ -222,8 +224,8 @@ int ReadFileBySequenceNumber(int sequenceNumber)
 int PrintSequenceNumbers()
 {
 
-    m_boardFile.messageCount = UpdateFile();
-    if(m_boardFile.messageCount == 0)
+    m_boardFile.nextMessageNumber = UpdateFile();
+    if(m_boardFile.nextMessageNumber == 0)
     {
         m_boardFile.lastError = PrintSequenceFailed;
         return 0;
@@ -232,7 +234,7 @@ int PrintSequenceNumbers()
 
     int i;
     printf("Sequence Numbers Available:\n");
-    for(i = 0; i < m_boardFile.messageCount +1; i++)
+    for(i = 0; i < m_boardFile.nextMessageNumber; i++)
     {
         printf("%d\n",i+1 );
     }
@@ -356,8 +358,8 @@ int GetOption() {
 int InitBBFile()
 {
     m_boardFile.lastError = NoError;
-    m_boardFile.messageCount = UpdateFile();
-    return m_boardFile.messageCount;
+    m_boardFile.nextMessageNumber = UpdateFile();
+    return m_boardFile.nextMessageNumber;
 }
 
 
