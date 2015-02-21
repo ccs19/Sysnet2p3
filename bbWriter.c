@@ -87,7 +87,7 @@ int UpdateFile()
     {
         while (1)
         {
-            fseek(m_boardFile.file, (count - 1) * MAX_MESSAGE_SIZE, SEEK_CUR);
+            fseek(m_boardFile.file, (count - 1) * MAX_MESSAGE_SIZE, SEEK_SET);
             char temp = fgetc(m_boardFile.file);                                //Get char and force EOF to trigger
 
             if (feof(m_boardFile.file) != 0)
@@ -127,7 +127,8 @@ int WriteFile()
     memset(messageToWrite, 0, MAX_MESSAGE_SIZE);
     memset(tempBuffer,0,MAX_MESSAGE_SIZE);
     //=========================================================================================//
-
+    printf("Enter the message to write to the board\n");
+    fflush(stdout);
     m_boardFile.nextMessageNumber = UpdateFile();
     sprintf(messageToWrite, "<message n = %d>", m_boardFile.nextMessageNumber);
     messageSize += strlen(messageToWrite) + strlen(endXml);
@@ -234,7 +235,7 @@ int PrintSequenceNumbers()
 
     int i;
     printf("Sequence Numbers Available:\n");
-    for(i = 0; i < m_boardFile.nextMessageNumber; i++)
+    for(i = 0; i < m_boardFile.nextMessageNumber-1; i++)
     {
         printf("%d\n",i+1 );
     }
