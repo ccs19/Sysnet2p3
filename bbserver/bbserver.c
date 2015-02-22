@@ -17,6 +17,26 @@
 #define MIN_HOSTS 1
 #define MAX_HOSTS 10
 
+typedef int bool;
+enum{false, true};
+
+typedef struct {
+    struct addr_in ip;
+    int port;
+}PeerInfo;
+
+typedef struct {
+    struct addr_in senderIp;
+    int port;
+    bool haveToken;
+}SendingInfo;
+
+typedef struct{
+    struct addr_in machineExitIP;
+    int machineExitPort;
+    bool machineExit;
+}TokenInfo;
+
 //Globals
 int numberOfHosts = -1;
 int i;
@@ -27,18 +47,7 @@ const int SERVER_PORT = 50000;
 const int HostNameMaxSize = 256;
 const int BUFFERSIZE = 256;
 const char* ServerShutdownMessage = "Server shutting down...";
-
-typedef struct
-{
-    int port;
-    struct in_addr IPaddress;
-} HostInfo;
-
-typedef struct
-{
-    int hasToken;
-    HostInfo host;
-} MessageForHost;
+SendingInfo sendingInfo;
 
 //function prototypes
 void printNumberOfHosts(int numberOfArgs, const char *inputString);
@@ -61,23 +70,20 @@ void tellHost();
 int main(int argc, char** argv)
 {
     printNumberOfHosts(argc, argv[1]); //get number of desired hosts
-    HostInfo array[numberOfHosts];
+    PeerInfo array[numberOfHosts];
 
     OpenSocket(SERVER_PORT);
     AcceptConnections();
 
     for(i = 0; i < numberOfHosts; i++) //wait for hosts
     {
-        //for number receive messages and stick in array
+        //for number receive messages and stick in array, in_addr, int port
     }
 
     for(i = 0; i < numberOfHosts; i++) //tell hosts
     {
-        tellHost();
+        tellHost();     //struct send - toIP, to port, int hasToken
     }
-
-    //struct receive - in_addr, int port
-    //struct send - toIP, to port, int hasToken
 
     return 0;
 }
@@ -175,6 +181,11 @@ void BindSocket()
  */
 void tellHost()
 {
+    sendingInfo.haveToken = false;
+//    sendingInfo.port = ;
+//    sendingInfo.senderIp = ;
+
+
     //last: to = 1, token = 1
     //else: to = self + 1, token = 0
 }
