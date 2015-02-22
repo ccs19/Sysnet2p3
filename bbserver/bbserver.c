@@ -6,8 +6,6 @@
  */
 
 #include <netinet/in.h>
-
-//Borrowed includes
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,18 +20,12 @@
 //Globals
 int numberOfHosts = -1;
 int i;
-
-//Borrowed globals
 int ServerSocket = 0;
 struct hostent *HostByName = NULL;
 struct sockaddr_in ServerAddress;
-
-//Borrowed Constants
+const int SERVER_PORT = 50000;
 const int HostNameMaxSize = 256;
-const int MAXLISTENERS = 5;
 const int BUFFERSIZE = 256;
-const int PORT_UNDEFINED = 99999;
-const int MAX_PORT = 65535;
 const char* ServerShutdownMessage = "Server shutting down...";
 
 typedef struct
@@ -71,7 +63,7 @@ int main(int argc, char** argv)
     printNumberOfHosts(argc, argv[1]); //get number of desired hosts
     HostInfo array[numberOfHosts];
 
-    OpenSocket(40000);
+    OpenSocket(SERVER_PORT);
     AcceptConnections();
 
     for(i = 0; i < numberOfHosts; i++) //wait for hosts
@@ -111,17 +103,18 @@ void printNumberOfHosts(int numberOfArgs, const char *inputString)
     if(numberOfHosts < MIN_HOSTS)
     {
         printf("%d host invalid. At least %d and at most %d hosts required.\n", numberOfHosts, MIN_HOSTS, MAX_HOSTS);
+        exit(1);
     }
     else if(numberOfHosts > MAX_HOSTS)
     {
         printf("%d hosts invalid. At least %d and at most %d hosts required.\n", numberOfHosts, MIN_HOSTS, MAX_HOSTS);
+        exit(1);
     }
     else
     {
         printf("Number of hosts: %d\n", numberOfHosts);
     }
 }
-
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION:   OpenSocket
@@ -203,7 +196,6 @@ int receiveHostMessage(int socketFD, char * response, int size)
     return length;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION:   DisplayInfo
     Displays the connection info of the server.
