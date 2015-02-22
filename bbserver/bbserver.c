@@ -20,6 +20,12 @@ int main(int argc, char** argv)
 {
     printNumberOfHosts(argc, argv[1]); //get number of desired hosts
 
+    //dynamic array of clientVar structs
+    //for number recevie messages and stick in array
+    //tell neighbors
+    //struct receive - in_addr, int port
+    //struct send - toIP, to port, fromIP, fromPort, int hasToken
+
     return 0;
 }
 
@@ -46,9 +52,3 @@ void printNumberOfHosts(int numberOfArgs, const char *inputString)
         printf("Number of hosts: %d\n", numberOfHosts);
     }
 }
-
-//dynamic array of clientVar structs
-//for number recevie messages and stick in array
-//tell neighbors
-//struct receive - in_addr, int port
-//struct send - toIP, to port, fromIP, fromPort, int hasToken
