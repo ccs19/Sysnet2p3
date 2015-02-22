@@ -14,6 +14,17 @@ int numberOfHosts = -1;
 #define MIN_HOSTS 1
 #define MAX_HOSTS 10
 
+typedef struct
+{
+    int port;
+} HostInfo;
+
+typedef struct
+{
+    int hasToken;
+    HostInfo host;
+} MessageForHost;
+
 void printNumberOfHosts(int numberOfArgs, const char *inputString);
 
 int main(int argc, char** argv)
@@ -29,6 +40,14 @@ int main(int argc, char** argv)
     return 0;
 }
 
+/*
+ * Checks that a command line argument is a valid integer number of hosts. If valid, it is printed. Otherwise,
+ * the program exits.
+ *
+ * numberOfArgs    - number of command line args
+ * inputString     - hopefully, a valid integer number of hosts
+ *
+ */
 void printNumberOfHosts(int numberOfArgs, const char *inputString)
 {
     if(numberOfArgs != 2)
@@ -51,4 +70,21 @@ void printNumberOfHosts(int numberOfArgs, const char *inputString)
     {
         printf("Number of hosts: %d\n", numberOfHosts);
     }
+}
+
+/*
+ * Receives the server's response formatted as an XML text string.
+ *
+ * sockfd    - the socket identifier
+ * response  - the server's response as an XML formatted string to be filled in by this function into the specified string array
+ *
+ * return   - 0, if no error; otherwise, a negative number indicating the error
+ */
+int receiveHostMessage(int socketFD, char * response, int size)
+{
+    int length = 0;
+    socklen_t bufSize = (socklen_t)size;
+    length = recvfrom(socketFD, response, bufSize, 0, NULL, NULL);
+    response[length] = '\0';
+    return length;
 }
