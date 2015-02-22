@@ -5,8 +5,6 @@
 #include <string.h>
 #include <sys/unistd.h>
 
-
-
 int main()
 {
     return 0;
@@ -14,8 +12,6 @@ int main()
 
 //Constants
 const int BUFFERSIZE = 256;
-
-
 
 /*
  * Creates a datagram socket and connects to a server.
@@ -34,7 +30,6 @@ int createSocket(char * serverName, int port, struct sockaddr_in * dest)
     struct hostent *hostptr;
     struct in_addr ipAddress;
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
 
     if( (socketFD = socket(AF_INET, SOCK_DGRAM, 0) ) < 0)
     {
@@ -78,6 +73,7 @@ int sendRequest(int socketFD, char * request, struct sockaddr_in * dest)
     int size = sendto(socketFD, request, strlen(request), 0, (struct sockaddr *) dest, destSize);
     return size;
 }
+
 /*
  * Receives the server's response formatted as an XML text string.
  *
