@@ -1,12 +1,19 @@
-C = gcc
+CC = gcc
 CFLAGS = -g -Wall
-OBJECTS = *.c
-NAME = bbpeer
-TODELETE = $(NAME) *.o
+SERVEROBJECTS = bbserver.c
+CLIENTOBJECTS = bbWriter.c
+SERVERNAME = bbserver
+CLIENTNAME = bbpeer
+TODELETE = $(SERVERNAME) $(CLIENTNAME) *.o
 LIBS = -lpthread
 
-$(NAME) : $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -o $(NAME) $(LIBS)
+all: $(SERVERNAME) $(CLIENTNAME)
+
+$(SERVERNAME): $(SERVEROBJECTS)
+	$(CC) $(CFLAGS) $(SERVEROBJECTS) -o $(SERVERNAME) $(LIBS)
+
+$(CLIENTNAME): $(CLIENTOBJECTS)
+	$(CC) $(CFLAGS) $(CLIENTOBJECTS) -o $(CLIENTNAME)
 
 .PHONY: clean
 clean:
