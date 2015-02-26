@@ -75,12 +75,12 @@ int main(int argc, char** argv)
     OpenSocket(SERVER_PORT);
     AcceptConnections();
 
-    for(i = 0; i < numberOfHosts; i++) //wait for hosts
+    for(i = 0; i < numberOfHosts; ++i) //wait for hosts
     {
         //for number receive messages and stick in array, in_addr, int port
     }
 
-    for(i = 0; i < numberOfHosts; i++) //tell hosts
+    for(i = 0; i < numberOfHosts; ++i) //tell hosts
     {
         tellHost();     //struct send - toIP, to port, int hasToken
     }
@@ -324,7 +324,7 @@ void ParseClientMessage(char* clientMessage,  struct sockaddr_in* clientAddress,
 
         //Begin string format:
         strcat(string, "<replyLoadAvg>");
-        for(i = 0; i < NUMLOADAVG; i++)
+        for(i = 0; i < NUMLOADAVG; ++i)
         {
             char tempAvg[BUFFERSIZE];
             sprintf(tempAvg, "%lf:", loadavg[i]);
@@ -404,7 +404,7 @@ int XMLParser(  const char* beginXml,
     if(strcmp(tempString, beginXml) == 0 ) //If beginXml is found
     {
         memcpy(tempString, clientMessage, strlen(clientMessage)); //Copy entire clientMessage
-        for(i = 1; i < strlen(clientMessage); i++) //Check for valid delimiter here
+        for(i = 1; i < strlen(clientMessage); ++i) //Check for valid delimiter here
         {
             if(tempString[i] == '<')
             {

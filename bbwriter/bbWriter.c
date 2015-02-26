@@ -219,7 +219,7 @@ int PrintSequenceNumbers()
 
     int i;
     printf("Sequence Numbers Available:\n");
-    for(i = 0; i < m_boardFile.nextMessageNumber-1; i++)
+    for(i = 0; i < m_boardFile.nextMessageNumber-1; ++i)
     {
         printf("%d\n",i+1 );
     }
@@ -415,7 +415,7 @@ int XMLParser(  const char* beginXml,
     if(strcmp(tempString, beginXml) == 0 ) //If beginXml is found
     {
         memcpy(tempString, clientMessage, clientMessageLength); //Copy entire clientMessage
-        for(i = 1; i < clientMessageLength; i++) //Check for valid delimiter here
+        for(i = 1; i < clientMessageLength; ++i) //Check for valid delimiter here
         {
             if(tempString[i] == '<')
             {
@@ -454,7 +454,7 @@ int EatInputUntilNewline()
     int charCount = 0;
     while(getchar() != '\n')//Consume newline
     {
-        charCount++;
+        ++charCount;
     }
     return charCount;
 }
