@@ -3,7 +3,6 @@
  * Systems and Networks II
  * Project 3
  * Christopher Schneider & Brett Rowberry
- *
  */
 
 #include "bbWriter.h"
@@ -100,8 +99,6 @@ int UpdateFile()
         }
 }
 
-
-
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: WriteFile
 
@@ -134,29 +131,26 @@ int WriteFile()
         m_boardFile.lastError = WriteMessageBufferOverflow;
         return 0;
     }
+
+    int messagePaddingLength = MAX_MESSAGE_SIZE - messageSize - 1  ;  //Pad the end of message with spaces
+    char messagePad[MAX_MESSAGE_SIZE];
+    memset(messagePad, 0, MAX_MESSAGE_SIZE);
+    sprintf(messagePad, "%*s\n", messagePaddingLength, "");   //length minus 4 to account for three newlines and \0
+    strcat(messageToWrite, messagePad);                         //Concat message to write with padding
+    strcat(messageToWrite, tempBuffer);                         //Message to write
+    strcat(messageToWrite, endXml);                             //And closing XML tag
+    fseek(m_boardFile.file, 0, SEEK_END);
+
+    if( fprintf(m_boardFile.file, "%s", messageToWrite) < 0 || m_boardFile.nextMessageNumber == 0 )
+    {
+        m_boardFile.lastError = WriteFailed;
+        return 0;
+    }
     else
     {
-        int messagePaddingLength = MAX_MESSAGE_SIZE - messageSize - 1  ;  //Pad the end of message with spaces
-        char messagePad[MAX_MESSAGE_SIZE];
-        memset(messagePad, 0, MAX_MESSAGE_SIZE);
-        sprintf(messagePad, "%*s\n", messagePaddingLength, "");   //length minus 4 to account for three newlines and \0
-        strcat(messageToWrite, messagePad);                         //Concat message to write with padding
-        strcat(messageToWrite, tempBuffer);                         //Message to write
-        strcat(messageToWrite, endXml);                             //And closing XML tag
-        fseek(m_boardFile.file, 0, SEEK_END);
-
-        if( fprintf(m_boardFile.file, "%s", messageToWrite) < 0 || m_boardFile.nextMessageNumber == 0 )
-        {
-            m_boardFile.lastError = WriteFailed;
-            return 0;
-        }
-        else
-        {
-            return 1;
-        }
+        return 1;
     }
 }
-
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: ReadFileBySequenceNumber
@@ -206,8 +200,6 @@ int ReadFileBySequenceNumber(int sequenceNumber)
     }
 }
 
-
-
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: PrintSequenceNumbers
 
@@ -218,14 +210,12 @@ int ReadFileBySequenceNumber(int sequenceNumber)
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int PrintSequenceNumbers()
 {
-
     m_boardFile.nextMessageNumber = UpdateFile();
     if(m_boardFile.nextMessageNumber == 0)
     {
         m_boardFile.lastError = PrintSequenceFailed;
         return 0;
     }
-
 
     int i;
     printf("Sequence Numbers Available:\n");
@@ -236,8 +226,6 @@ int PrintSequenceNumbers()
     fflush(stdout);
     return 1;
 }
-
-
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: OpenFile
@@ -255,8 +243,6 @@ int OpenFile(const char* fileName)
     if(NULL == m_boardFile.file) return 0;
     return 1;
 }
-
-
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: PrintMenu
@@ -301,8 +287,6 @@ int PrintMenu()
     return 1;
 }
 
-
-
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: GetOption
 
@@ -337,10 +321,6 @@ int GetOption() {
     return 0;
 }
 
-
-
-
-
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: InitBBFile
 
@@ -356,10 +336,6 @@ int InitBBFile()
     m_boardFile.nextMessageNumber = UpdateFile();
     return m_boardFile.nextMessageNumber;
 }
-
-
-
-
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: PrintErrorMessage
@@ -406,13 +382,7 @@ void PrintErrorMessage()
         default:
             break;
     }
-
-
 }
-
-
-
-
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: XMLParser
@@ -476,7 +446,6 @@ int XMLParser(  const char* beginXml,
     }
     return returnVal;
 }
-
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: EatInputUntilNewLine
