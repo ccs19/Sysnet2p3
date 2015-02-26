@@ -139,17 +139,16 @@ int WriteFile()
     }
 
     int messagePaddingLength = MAX_MESSAGE_SIZE - messageSize - lengthendXML - 1  ; //Pad the end of message with spaces
-    sprintf(messageToWrite, "<message n = %d>", m_boardFile.nextMessageNumber); //Add message header to messageToWrite
     sprintf(messagePad, "%*s\n", messagePaddingLength, "");   //length minus 4 to account for three newlines and \0
-    strcat(messageToWrite, messagePad);                         //Concat message to write with padding
-    strcat(messageToWrite, userMessage);                         //Message to write
 
-    strcat(messageToWrite, endXml);                             //And closing XML tag
+    sprintf(messageToWrite, "<message n = %d>", m_boardFile.nextMessageNumber); //Add message header to messageToWrite
+    strcat(messageToWrite, messagePad);                         //Add padding to messageToWrite
+    strcat(messageToWrite, userMessage);                        //Add user message to messageToWrite
+    strcat(messageToWrite, endXml);                             //And message footer to messageToWrite
 
-    printf("message: [%s]\n", messageToWrite);
-    fseek(m_boardFile.file, 0, SEEK_END);
+    fseek(m_boardFile.file, 0, SEEK_END);                       //Update file pointer
 
-    if( fprintf(m_boardFile.file, "%s", messageToWrite) < 0 || m_boardFile.nextMessageNumber == 0 )
+    if( fprintf(m_boardFile.file, "%s", messageToWrite) < 0 || m_boardFile.nextMessageNumber < 0 )
     {
         m_boardFile.lastError = WriteFailed;
         return 0;
