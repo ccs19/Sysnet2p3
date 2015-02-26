@@ -3,11 +3,9 @@
  * Systems and Networks II
  * Project 3
  * Christopher Schneider & Brett Rowberry
- *
  */
 
 #include <stdio.h>
-
 
 typedef enum
 {
@@ -26,13 +24,10 @@ typedef enum
 typedef struct{
     FILE* file;
     int nextMessageNumber;          //Current message counter.
-                        //Idea! Send message counter across hosts to check for
-                        //file changes
-    ErrorCode lastError; //If an error is encountered, this is set
+                                    //Idea! Send message counter across hosts to check for
+                                    //file changes
+    ErrorCode lastError;            //If an error is encountered, this is set
 }BBFile;
-
-
-
 
 int UpdateFile();
 int WriteFile();

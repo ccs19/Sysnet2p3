@@ -14,6 +14,7 @@
 BBFile m_boardFile;
 
 //User options:
+#define ERROR 0
 #define WRITE '1'
 #define READ '2'
 #define LIST '3'
@@ -68,11 +69,10 @@ int main(int argc, const char* argv[])
 
     Reads the file and updates the message nextMessageNumber variable.
 
-    @return     -- On failure, lastError is set and 0 returned. On success, returns 1
+    @return     -- Number of next message. On failure, lastError is set and 0 returned.
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 //Updates file pointer to bottom of stream
-//Return number of next message on success, 0 on failure
 int UpdateFile()
 {
     int count = 1;
@@ -84,10 +84,12 @@ int UpdateFile()
             char temp = fgetc(m_boardFile.file);                                //Get char and force EOF to trigger
 
             if (feof(m_boardFile.file) != 0)
+            {
                 return count;
+            }
             else
             {
-                count++;
+                ++count;
                 ungetc(temp, m_boardFile.file);                                 //Since we didn't find EOF, put char back
             }
         }
@@ -107,8 +109,6 @@ int UpdateFile()
     @return     -- On failure, lastError is set and 0 returned. On success, returns 1
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-//Writes to file
-//Return 1 on success, 0 on failure
 int WriteFile()
 {
     //=========================================================================================//
@@ -125,21 +125,21 @@ int WriteFile()
     messageSize += strlen(messageToWrite) + strlen(endXml);
     fgets(tempBuffer, MAX_MESSAGE_SIZE, stdin);             //Get user message here
     messageSize += strlen(tempBuffer);
-
-    if(messageSize > MAX_MESSAGE_SIZE)                      //check for message buffer overflow
-    {
-        m_boardFile.lastError = WriteMessageBufferOverflow;
-        return 0;
-    }
-
-    int messagePaddingLength = MAX_MESSAGE_SIZE - messageSize - 1  ;  //Pad the end of message with spaces
-    char messagePad[MAX_MESSAGE_SIZE];
-    memset(messagePad, 0, MAX_MESSAGE_SIZE);
-    sprintf(messagePad, "%*s\n", messagePaddingLength, "");   //length minus 4 to account for three newlines and \0
-    strcat(messageToWrite, messagePad);                         //Concat message to write with padding
-    strcat(messageToWrite, tempBuffer);                         //Message to write
-    strcat(messageToWrite, endXml);                             //And closing XML tag
-    fseek(m_boardFile.file, 0, SEEK_END);
+//
+//    if(messageSize > MAX_MESSAGE_SIZE)                      //check for message buffer overflow
+//    {
+//        m_boardFile.lastError = WriteMessageBufferOverflow;
+//        return 0;
+//    }
+//
+//    int messagePaddingLength = MAX_MESSAGE_SIZE - messageSize - 1  ;  //Pad the end of message with spaces
+//    char messagePad[MAX_MESSAGE_SIZE];
+//    memset(messagePad, 0, MAX_MESSAGE_SIZE);
+//    sprintf(messagePad, "%*s\n", messagePaddingLength, "");   //length minus 4 to account for three newlines and \0
+//    strcat(messageToWrite, messagePad);                         //Concat message to write with padding
+//    strcat(messageToWrite, tempBuffer);                         //Message to write
+//    strcat(messageToWrite, endXml);                             //And closing XML tag
+//    fseek(m_boardFile.file, 0, SEEK_END);
 
     if( fprintf(m_boardFile.file, "%s", messageToWrite) < 0 || m_boardFile.nextMessageNumber == 0 )
     {
@@ -252,14 +252,11 @@ int OpenFile(const char* fileName)
     @return     --  Returns 0 when user requests exit, else 1
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-//Prints the BB Menu
-//Returns 0 when user requests exit
-//otherwise returns 1
 int PrintMenu()
 {
     m_boardFile.lastError = NoError; //Reset error
-    printf(  "\n"
-             "=====================================================================\n"
+    printf( "\n"
+            "=====================================================================\n"
              "|                      Bulletin Board Options                       |\n"
              "=====================================================================\n"
              "1. write  :  Appends a new message to the end of the message board\n"
@@ -272,7 +269,7 @@ int PrintMenu()
              "   Option : ");
     fflush(stdout);
     int optionResult = GetOption();
-    if(0 == optionResult)           //If something failed
+    if(ERROR == optionResult)           //If something failed
     {
         PrintErrorMessage();        //Print error
     }
@@ -295,8 +292,6 @@ int PrintMenu()
     @return     --      EXIT if user selects exit, 0 on error
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-//Returns 0 on error
-//Returns EXIT if option 4 is selected
 int GetOption() {
     int userOption = 0, readOption = 0;
 
