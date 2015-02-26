@@ -23,7 +23,9 @@ BBFile m_boardFile;
 
 //Constants
  const int MAX_MESSAGE_SIZE = 256;
- const char* endXml = "</message>\n";
+ const int lengthendXML = 11;
+ const char * endXml = "</message>\n";
+ const char * TEST_ME = "APPEND";
  const int READ_STRING_LENGTH = 4;          //Length of read string
  const int READ_SPACE = 4;                  //Array index of where we expect a space to be
  const int READ_SEQUENCE_NUMBER = 5;        //Array index of where we expect the sequence number to be
@@ -59,7 +61,7 @@ int main(int argc, const char* argv[])
     }
 
     while(PrintMenu());
-    fclose(m_boardFile.file); //Close file
+//    fclose(m_boardFile.file); //Close file
 
     return 0;
 }
@@ -111,35 +113,41 @@ int UpdateFile()
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int WriteFile()
 {
-    //=========================================================================================//
     char messageToWrite[MAX_MESSAGE_SIZE];          //Message to be written to BB
-    char tempBuffer[MAX_MESSAGE_SIZE];              //Buffer to hold message temporarily to avoid overflow
+    char userMessage[MAX_MESSAGE_SIZE];             //Buffer to hold user message temporarily to avoid overflow
+    char messagePad[MAX_MESSAGE_SIZE];              //For padding messageToWrite to MAX_MESSAGE_SIZE
+    char messageHeader[MAX_MESSAGE_SIZE];           //For holding message header
     int messageSize = 0;                            //Size of message
-    memset(messageToWrite, 0, MAX_MESSAGE_SIZE);
-    memset(tempBuffer,0,MAX_MESSAGE_SIZE);
-    //=========================================================================================//
-    printf("Enter the message to write to the board\n");
+
+    memset(messageToWrite, 0, MAX_MESSAGE_SIZE);    //Clear out arrays
+    memset(userMessage, 0, MAX_MESSAGE_SIZE);
+    memset(messagePad, 0, MAX_MESSAGE_SIZE);
+
+    printf("Enter the message to write to the board\n");            //Prompt user for message
     fflush(stdout);
-    m_boardFile.nextMessageNumber = UpdateFile();
-    sprintf(messageToWrite, "<message n = %d>", m_boardFile.nextMessageNumber);
-    messageSize += strlen(messageToWrite) + strlen(endXml);
-    fgets(tempBuffer, MAX_MESSAGE_SIZE, stdin);             //Get user message here
-    messageSize += strlen(tempBuffer);
-//
-//    if(messageSize > MAX_MESSAGE_SIZE)                      //check for message buffer overflow
-//    {
-//        m_boardFile.lastError = WriteMessageBufferOverflow;
-//        return 0;
-//    }
-//
-//    int messagePaddingLength = MAX_MESSAGE_SIZE - messageSize - 1  ;  //Pad the end of message with spaces
-//    char messagePad[MAX_MESSAGE_SIZE];
-//    memset(messagePad, 0, MAX_MESSAGE_SIZE);
-//    sprintf(messagePad, "%*s\n", messagePaddingLength, "");   //length minus 4 to account for three newlines and \0
-//    strcat(messageToWrite, messagePad);                         //Concat message to write with padding
-//    strcat(messageToWrite, tempBuffer);                         //Message to write
-//    strcat(messageToWrite, endXml);                             //And closing XML tag
-//    fseek(m_boardFile.file, 0, SEEK_END);
+    fgets(userMessage, MAX_MESSAGE_SIZE, stdin);             //Get user message
+
+    m_boardFile.nextMessageNumber = UpdateFile();           //Get number of next message
+
+    sprintf(messageHeader, "<message n = %d>\n", m_boardFile.nextMessageNumber); //Create message header
+    messageSize = (int)strlen(messageHeader) + (int)strlen(userMessage) + lengthendXML;  //Set messageSize to sum of lengths of header, userMessage, and footer
+
+    if(messageSize > MAX_MESSAGE_SIZE)                       //Check for message buffer overflow
+    {
+        m_boardFile.lastError = WriteMessageBufferOverflow;
+        return 0;
+    }
+
+    int messagePaddingLength = MAX_MESSAGE_SIZE - messageSize - lengthendXML - 1  ; //Pad the end of message with spaces
+    sprintf(messageToWrite, "<message n = %d>", m_boardFile.nextMessageNumber); //Add message header to messageToWrite
+    sprintf(messagePad, "%*s\n", messagePaddingLength, "");   //length minus 4 to account for three newlines and \0
+    strcat(messageToWrite, messagePad);                         //Concat message to write with padding
+    strcat(messageToWrite, userMessage);                         //Message to write
+
+    strcat(messageToWrite, endXml);                             //And closing XML tag
+
+    printf("message: [%s]\n", messageToWrite);
+    fseek(m_boardFile.file, 0, SEEK_END);
 
     if( fprintf(m_boardFile.file, "%s", messageToWrite) < 0 || m_boardFile.nextMessageNumber == 0 )
     {
