@@ -153,10 +153,8 @@ int WriteFile()
         m_boardFile.lastError = WriteFailed;
         return 0;
     }
-    else
-    {
-        return 1;
-    }
+
+    return 1;
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
