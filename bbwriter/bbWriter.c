@@ -7,12 +7,9 @@
  */
 
 #include "bbWriter.h"
-
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
 
 //Globals
 BBFile m_boardFile;
@@ -24,15 +21,13 @@ BBFile m_boardFile;
 #define EXIT '4'
 #define INVALID '5'
 
-
-
 //Constants
  const int MAX_MESSAGE_SIZE = 256;
  const char* endXml = "</message>\n";
- const int READ_STRING_LENGTH = 4; //Length of read string
- const int READ_SPACE = 4;         //Array index of where we expect a space to be
+ const int READ_STRING_LENGTH = 4;          //Length of read string
+ const int READ_SPACE = 4;                  //Array index of where we expect a space to be
  const int READ_SEQUENCE_NUMBER = 5;        //Array index of where we expect the sequence number to be
- const int SPECIAL_CHARACTER_COUNT = 4; //Number of special characters in message
+ const int SPECIAL_CHARACTER_COUNT = 4;     //Number of special characters in message
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: main
@@ -45,30 +40,29 @@ BBFile m_boardFile;
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int main(int argc, const char* argv[])
 {
-    if(argc < 2 || argc > 2)
+    if(argc != 2)
     {
         printf("Usage: %s <filename>\n", argv[0]);
+        return 0;
     }
-    else
+
+    if(0 == OpenFile(argv[1])) //Try to open file
     {
-        if(0 == OpenFile(argv[1])) //Try to open file
-        {
-            printf("Failed to open file %s\n", argv[1]);
-            return 0;
-        }
-        if(InitBBFile() == 0) //Initialize BB File struct
-        {
-            PrintErrorMessage(); //This only fails if UpdateFile() fails
-            fflush(stdout);
-            return 0;
-        }
-        while(PrintMenu());
-        fclose(m_boardFile.file); //Close file
+        printf("Failed to open file %s\n", argv[1]);
+        return 0;
     }
+    if(InitBBFile() == 0) //Initialize BB File struct
+    {
+        PrintErrorMessage(); //This only fails if UpdateFile() fails
+        fflush(stdout);
+        return 0;
+    }
+
+    while(PrintMenu());
+    fclose(m_boardFile.file); //Close file
+
     return 0;
 }
-
-
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: UpdateFile
