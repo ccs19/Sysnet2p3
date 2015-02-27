@@ -23,7 +23,7 @@ BBFile m_boardFile;
 //Constants
  const int MAX_MESSAGE_SIZE = 256;
  const char * endXml = "</message>\n";
-const int lengthendXML = 11;
+ const int lengthendXML = 11;
  const int READ_STRING_LENGTH = 4;          //Length of read string
  const int READ_SPACE = 4;                  //Array index of where we expect a space to be
  const int READ_SEQUENCE_NUMBER = 5;        //Array index of where we expect the sequence number to be
@@ -114,8 +114,6 @@ int WriteFile()
     fflush(stdout);
     fgets(userMessage, MAX_MESSAGE_SIZE, stdin);                    //Get user message
 
-    m_boardFile.nextMessageNumber = UpdateFile();                   //Get number of next message
-
     sprintf(messageHeader, "<message n = %d>\n", m_boardFile.nextMessageNumber); //Create message header
     sizeMessageHeader = (int)strlen(messageHeader);
     sizeUserMessage = (int)strlen(userMessage);
@@ -135,6 +133,9 @@ int WriteFile()
     strcat(messageToWrite, userMessage);                        //Add user message to messageToWrite
     strcat(messageToWrite, endXml);                             //And message footer to messageToWrite
 
+    OpenFile(m_boardFile.fileName);         //OPEN
+    m_boardFile.nextMessageNumber = UpdateFile();                   //Get number of next message
+
     fseek(m_boardFile.file, 0, SEEK_END);                       //Update file pointer
 
     if( fprintf(m_boardFile.file, "%s", messageToWrite) < 0 || m_boardFile.nextMessageNumber < 0 )
@@ -142,6 +143,8 @@ int WriteFile()
         m_boardFile.lastError = WriteFailed;
         return 0;
     }
+
+    fclose(m_boardFile.file); //CLOSE
 
     return 1;
 }
@@ -162,6 +165,8 @@ int ReadFileBySequenceNumber(int sequenceNumber)
     int seekLength = (sequenceNumber - 1) * (MAX_MESSAGE_SIZE - 1);
     //Sequences 1 starts at line 0, message has '\0'
 
+    OpenFile(m_boardFile.fileName);
+
     m_boardFile.nextMessageNumber = UpdateFile();                            //Update next message number
 
     if(sequenceNumber < m_boardFile.nextMessageNumber && sequenceNumber > 0) //Check sequence number exists and > 0
@@ -176,25 +181,30 @@ int ReadFileBySequenceNumber(int sequenceNumber)
             if(xmlResult == 0)                                              //If invalid message in file
             {
                 m_boardFile.lastError = InvalidXMLSyntax;
+                fclose(m_boardFile.file);
                 return 0;
             }
             else if(xmlResult == -1)    //If message too large
             {
                 m_boardFile.lastError = ReadMessageBufferOverflow;
+                fclose(m_boardFile.file);
                 return 0;
             }
             printf("Message: %s", messageToPrint);
+            fclose(m_boardFile.file);
             return 1;
         }
         else                                                               //If seek fails...
         {
             m_boardFile.lastError = SeekFailed;
+            fclose(m_boardFile.file);
             return 0;
         }
     }
     else                                                           //Invalid user input or sequence number doesn't exist
     {
         m_boardFile.lastError = ReadFailed;
+        fclose(m_boardFile.file);
         return 0;
     }
 }
@@ -209,10 +219,12 @@ int ReadFileBySequenceNumber(int sequenceNumber)
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int PrintSequenceNumbers()
 {
+    OpenFile(m_boardFile.fileName); //OPEN
     m_boardFile.nextMessageNumber = UpdateFile();
     if(m_boardFile.nextMessageNumber == 0)
     {
         m_boardFile.lastError = PrintSequenceFailed;
+        fclose(m_boardFile.file);
         return 0;
     }
 
@@ -223,6 +235,7 @@ int PrintSequenceNumbers()
         printf("%d\n", i+1 );
     }
     fflush(stdout);
+    fclose(m_boardFile.file); //CLOSE
     return 1;
 }
 
@@ -326,14 +339,16 @@ int GetOption() {
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 void InitBBFile(const char *filename)
 {
-    m_boardFile.file = OpenFile(filename);
+    m_boardFile.fileName = filename;
     m_boardFile.lastError = NoError;
+    m_boardFile.file = OpenFile(filename);
     m_boardFile.nextMessageNumber = UpdateFile();
     if(m_boardFile.nextMessageNumber == 0)
     {
         printf("Failed to initialize BB file. Exiting...\n");
         exit(1);
     }
+    fclose(m_boardFile.file);
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/

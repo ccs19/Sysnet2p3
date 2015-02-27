@@ -23,6 +23,7 @@ typedef enum
 
 typedef struct{
     FILE* file;
+    const char * fileName;
     int nextMessageNumber;          //Current message counter.
                                     //Idea! Send message counter across hosts to check for
                                     //file changes

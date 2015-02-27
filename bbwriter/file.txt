@@ -16,3 +16,6 @@ GGG
 <message n = 6>                                                                                                                                                                                                                                
 TUV
 </message>
+<message n = 7>                                                                                                                                                                                                                                
+GGG
+</message>
