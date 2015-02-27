@@ -56,6 +56,14 @@ int main(int argc, const char* argv[])
 
     while(PrintMenu());
 
+    //Threads TODO
+    //User - menu
+    //Network - token & IO
+
+    //token - command, selfIP, selfPort, nextIP, nextPort TODO
+
+    //establish ring TODO
+
 //    pthread_t tid;
 //    pthread_create(&tid, NULL, );
 
