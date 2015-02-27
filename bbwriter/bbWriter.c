@@ -5,9 +5,16 @@
  * Christopher Schneider & Brett Rowberry
  */
 
-#include "bbWriter.h"
 #include <string.h>
 #include <stdlib.h>
+
+#include <errno.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include "bbWriter.h"
 
 //Globals
 BBFile m_boardFile;
@@ -48,6 +55,9 @@ int main(int argc, const char* argv[])
     InitBBFile(argv[1]);
 
     while(PrintMenu());
+
+//    pthread_t tid;
+//    pthread_create(&tid, NULL, );
 
     return 0;
 }
