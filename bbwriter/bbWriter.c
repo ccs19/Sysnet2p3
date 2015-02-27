@@ -45,10 +45,10 @@ int main(int argc, const char* argv[])
         return 0;
     }
 
-    OpenFile(argv[1]);
-    InitBBFile();
+    InitBBFile(argv[1]);
 
     while(PrintMenu());
+
     fclose(m_boardFile.file); //Close file   TODO move open and close to within functions that access file, makes operations more atomic
 
     return 0;
@@ -234,14 +234,15 @@ int PrintSequenceNumbers()
     @return exits on failure
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-void OpenFile(const char * fileName)
+FILE * OpenFile(const char * fileName)
 {
-    m_boardFile.file = fopen(fileName, "a+");
-    if(NULL == m_boardFile.file)
+    FILE * fp = fopen(fileName, "a+");
+    if(NULL == fp)
     {
         printf("Failed to open file %s. Exiting...", fileName);
         exit(1);
     }
+    return fp;
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -323,8 +324,9 @@ int GetOption() {
     already present in the file we're writing to
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-void InitBBFile()
+void InitBBFile(const char *filename)
 {
+    m_boardFile.file = OpenFile(filename);
     m_boardFile.lastError = NoError;
     m_boardFile.nextMessageNumber = UpdateFile();
     if(m_boardFile.nextMessageNumber == 0)
