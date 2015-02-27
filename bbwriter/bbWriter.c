@@ -42,14 +42,12 @@ int main(int argc, const char* argv[])
     if(argc != 2)
     {
         printf("Usage: %s <filename>\n", argv[0]);
-        return 0;
+        return -1;
     }
 
     InitBBFile(argv[1]);
 
     while(PrintMenu());
-
-    fclose(m_boardFile.file); //Close file   TODO move open and close to within functions that access file, makes operations more atomic
 
     return 0;
 }
