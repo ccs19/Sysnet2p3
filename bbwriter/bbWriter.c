@@ -8,7 +8,6 @@
 #include "bbWriter.h"
 #include <string.h>
 #include <stdlib.h>
-#include <Kernel/string.h>
 
 //Globals
 BBFile m_boardFile;
@@ -23,12 +22,11 @@ BBFile m_boardFile;
 
 //Constants
  const int MAX_MESSAGE_SIZE = 256;
- const int lengthendXML = 11;
  const char * endXml = "</message>\n";
+const int lengthendXML = 11;
  const int READ_STRING_LENGTH = 4;          //Length of read string
  const int READ_SPACE = 4;                  //Array index of where we expect a space to be
  const int READ_SEQUENCE_NUMBER = 5;        //Array index of where we expect the sequence number to be
- const int SPECIAL_CHARACTER_COUNT = 4;     //Number of special characters in message
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: main
@@ -47,17 +45,8 @@ int main(int argc, const char* argv[])
         return 0;
     }
 
-    if(0 == OpenFile(argv[1])) //Try to open file
-    {
-        printf("Failed to open file %s\n", argv[1]);
-        return 0;
-    }
-    if(InitBBFile() == 0) //Initialize BB File struct
-    {
-        PrintErrorMessage(); //This only fails if UpdateFile() fails
-        fflush(stdout);
-        return 0;
-    }
+    OpenFile(argv[1]);
+    InitBBFile();
 
     while(PrintMenu());
     fclose(m_boardFile.file); //Close file   TODO move open and close to within functions that access file, makes operations more atomic
@@ -91,7 +80,7 @@ int UpdateFile()
             else
             {
                 ++count;
-                ungetc(temp, m_boardFile.file);                                 //Since we didn't find EOF, put char back
+                ungetc(temp, m_boardFile.file);                                //Since we didn't find EOF, put char back
             }
         }
     }
@@ -131,7 +120,6 @@ int WriteFile()
     sizeMessageHeader = (int)strlen(messageHeader);
     sizeUserMessage = (int)strlen(userMessage);
     sizeMessageMinusPad = sizeMessageHeader + sizeUserMessage + lengthendXML;  //Set sizeMessageToWrite to sum of lengths of header, userMessage, and footer
-    printf("size message to write [%d]\n", sizeMessageMinusPad); //TODO remove
 
     if(sizeMessageMinusPad > MAX_MESSAGE_SIZE)                       //Check for message buffer overflow
     {
@@ -241,18 +229,19 @@ int PrintSequenceNumbers()
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: OpenFile
 
-    Opens the bulletin board file
+    Opens the bulletin board file for read and write operations
 
-    @return 0 on failure, 1 on success
+    @return exits on failure
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-//Opens file for R/W operations
-//Returns 1 on success, 0 on failure
-int OpenFile(const char * fileName)
+void OpenFile(const char * fileName)
 {
     m_boardFile.file = fopen(fileName, "a+");
-    if(NULL == m_boardFile.file) return 0;
-    return 1;
+    if(NULL == m_boardFile.file)
+    {
+        printf("Failed to open file %s. Exiting...", fileName);
+        exit(1);
+    }
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -332,15 +321,17 @@ int GetOption() {
 
     Initializes the m_boardFile struct and sets the number of messages
     already present in the file we're writing to
-
-    @return     --  Number of messages in file or 0 if failure
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-int InitBBFile()
+void InitBBFile()
 {
     m_boardFile.lastError = NoError;
     m_boardFile.nextMessageNumber = UpdateFile();
-    return m_boardFile.nextMessageNumber;
+    if(m_boardFile.nextMessageNumber == 0)
+    {
+        printf("Failed to initialize BB file. Exiting...\n");
+        exit(1);
+    }
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
