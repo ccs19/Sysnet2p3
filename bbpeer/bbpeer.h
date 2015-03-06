@@ -1,5 +1,3 @@
-#include <netinet/in.h>
-
 /*
  * bbpeer.h
  * Systems and Networks II
@@ -9,22 +7,24 @@
  * You may also implement any helper functions you deem necessary to complete the program.
  */
 
+#include <netinet/in.h>
+
 typedef int bool;
 enum{false, true};
 
 typedef struct {
-    struct addr_in ip;
+    struct addr_in * ip;
     int port;
 }PeerInfo;
 
 typedef struct {
-    struct addr_in senderIp;
+    struct addr_in * senderIp;
     int port;
     bool haveToken;
 }SendingInfo;
 
 typedef struct{
-    struct addr_in machineExitIP;
+    struct addr_in * machineExitIP;
     int machineExitPort;
     bool machineExit;
 }TokenInfo;
