@@ -244,11 +244,14 @@ void AcceptConnections()
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
     DisplayInfo();
-    printf("Waiting for connection... ");
     fflush(stdout);
-    for(;;)
+
+    int i = 0;
+    while(i < numberOfHosts)
     {
+        printf("Waiting for %d connections... ", numberOfHosts - i);
         HandleClientRequests(&clientAddress);
+        ++i;
     }
 }
 
@@ -294,6 +297,10 @@ void HandleClientRequests(struct sockaddr_in* clientAddress)
     );
     stringBuffer[length] = '\0';
     printf("Received message: %s\n", stringBuffer);
+
+    printf("Client IP: %s\n", inet_ntoa(clientAddress->sin_addr));
+    printf("Client Port:      %d\n", htons(clientAddress->sin_port));
+    fflush(stdout);
     ParseClientMessage(stringBuffer, clientAddress, length);
 }
 
