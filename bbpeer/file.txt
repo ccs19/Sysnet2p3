@@ -1,33 +1,9 @@
 <message n = 1>                                                                                                                                                                                                                                
-AAA
+dog
 </message>
-<message n = 2>                                                                                                                                                                                                                                
-BBB
+<message n = 1>                                                                                                                                                                                                                                
+cat
 </message>
-<message n = 3>                                                                                                                                                                                                                           
-SQUIRREL
-</message>
-<message n = 4>                                                                                                                                                                                                                             
-MONKEY
-</message>
-<message n = 5>                                                                                                                                                                                                                                
-GGG
-</message>
-<message n = 6>                                                                                                                                                                                                                                
-TUV
-</message>
-<message n = 7>                                                                                                                                                                                                                                
-GGG
-</message>
-<message n = 8>                                                                                                                                                                                                                                
-PPP
-</message>
-<message n = 9>                                                                                                                                                                                                                             
-FGHJKL
-</message>
-<message n = 10>                                                                                                                                                                                                                             
-hello
-</message>
-<message n = 10>                                                                                                                                                                                                                              
-dogs
+<message n = 2>                                                                                                                                                                                                                                 
+ab
 </message>

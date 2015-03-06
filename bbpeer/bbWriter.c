@@ -36,41 +36,6 @@ BBFile m_boardFile;
  const int READ_SPACE = 4;                  //Array index of where we expect a space to be
  const int READ_SEQUENCE_NUMBER = 5;        //Array index of where we expect the sequence number to be
 
-///*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-///*  FUNCTION: main
-//
-//    Accepts a file in argv[1]
-//
-//    @param argc         --  number of args
-//    @param argv         --  arg vector
-// */
-///*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-//int main(int argc, const char* argv[])
-//{
-//    if(argc != 2)
-//    {
-//        printf("Usage: %s <filename>\n", argv[0]);
-//        return -1;
-//    }
-//
-//    InitBBFile(argv[1]);
-//
-//    while(PrintMenu());
-//
-//    //Threads TODO
-//    //User - menu
-//    //Network - token & IO
-//
-//    //token - command, selfIP, selfPort, nextIP, nextPort TODO
-//
-//    //establish ring TODO
-//
-////    pthread_t tid;
-////    pthread_create(&tid, NULL, );
-//
-//    return 0;
-//}
-
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: UpdateFile
 
@@ -153,6 +118,8 @@ int WriteFile()
     OpenFile(m_boardFile.fileName);         //OPEN
     m_boardFile.nextMessageNumber = UpdateFile();                   //Get number of next message
 
+    printf("in write, next message number = %d\n", m_boardFile.nextMessageNumber); //TODO
+
     fseek(m_boardFile.file, 0, SEEK_END);                       //Update file pointer
 
     if( fprintf(m_boardFile.file, "%s", messageToWrite) < 0 || m_boardFile.nextMessageNumber < 0 )
@@ -183,7 +150,8 @@ int ReadFileBySequenceNumber(int sequenceNumber)
 
     OpenFile(m_boardFile.fileName);
 
-    m_boardFile.nextMessageNumber = UpdateFile();                            //Update next message number
+    m_boardFile.nextMessageNumber = UpdateFile();                            //Update next message number TODO
+    printf("in read, next message number = %d\n", m_boardFile.nextMessageNumber); //TODO
 
     if(sequenceNumber < m_boardFile.nextMessageNumber && sequenceNumber > 0) //Check sequence number exists and > 0
     {
@@ -192,10 +160,15 @@ int ReadFileBySequenceNumber(int sequenceNumber)
             fread(messageToParse, sizeof(char), MAX_MESSAGE_SIZE, m_boardFile.file); //Get string of data to parse
 
             sprintf(beginXml, "<message n = %d>",  sequenceNumber);
+
             int xmlResult = XMLParser(beginXml, endXml, messageToParse, messageToPrint, MAX_MESSAGE_SIZE);
+
+            printf("NEXT MESSAGE NUMBER = %d\n", m_boardFile.nextMessageNumber);
+            printf("SEQUENCE NUMBER = %d\n", sequenceNumber);
 
             if(xmlResult == 0)                                              //If invalid message in file
             {
+                puts("xml result = 0");
                 m_boardFile.lastError = InvalidXMLSyntax;
                 fclose(m_boardFile.file);
                 return 0;
@@ -237,6 +210,9 @@ int PrintSequenceNumbers()
 {
     OpenFile(m_boardFile.fileName); //OPEN
     m_boardFile.nextMessageNumber = UpdateFile();
+
+    printf("in print seq numbers, next message # = %d\n", m_boardFile.nextMessageNumber); //TODO
+
     if(m_boardFile.nextMessageNumber == 0)
     {
         m_boardFile.lastError = PrintSequenceFailed;
@@ -359,6 +335,9 @@ void InitBBFile(const char *filename)
     m_boardFile.lastError = NoError;
     m_boardFile.file = OpenFile(filename);
     m_boardFile.nextMessageNumber = UpdateFile();
+
+    printf("in init, next message# = %d\n", m_boardFile.nextMessageNumber); //TODO
+
     if(m_boardFile.nextMessageNumber == 0)
     {
         printf("Failed to initialize BB file. Exiting...\n");
