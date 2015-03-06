@@ -7,8 +7,6 @@
  * You may also implement any helper functions you deem necessary to complete the program.
  */
 
-#include <netinet/in.h>
-
 typedef int bool;
 enum{false, true};
 

@@ -5,12 +5,12 @@
  * Christopher Schneider & Brett Rowberry
  */
 
-#include "bbpeer.h"
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "bbpeer.h"
 
 int main()
 {
