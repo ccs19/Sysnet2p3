@@ -5,7 +5,6 @@
  * Christopher Schneider & Brett Rowberry
  */
 
-
 #include <stdio.h> //header files from book
 #include <stdlib.h>
 #include <sys/types.h>
@@ -31,7 +30,8 @@ ServerInfo serverInfo;
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: main
 
-    Accepts a file in argv[1]. The main/user thread operates the menu.
+    Accepts a file in argv[1]. The main/user thread operates the menu. The network thread handles
+    IO and token passing and receiving.
 
     @param argc         --  number of args
     @param argv         --  arg vector
@@ -64,12 +64,9 @@ int main(int argc, const char* argv[])
     printf ("Enter a message: ");
     fflush(stdout);
     fgets (message, 256, stdin);
-    // replace new line with null character
-    message[strlen(message)-1] = '\0';
+    message[strlen(message) - 1] = '\0';     // replace new line with null character
 
-    // send request to server
-    //if (sendRequest (sockfd, "<echo>Hello, World!</echo>", &servaddr) < 0) {
-    if (sendRequest (sockfd, message, &servaddr) < 0) {
+    if (sendRequest (sockfd, message, &servaddr) < 0) {     // send request to server
         closeSocket (sockfd);
         exit (1);
     }
@@ -78,11 +75,9 @@ int main(int argc, const char* argv[])
         closeSocket (sockfd);
         exit (1);
     }
+
     closeSocket (sockfd);
-
-    // display response from server
-    printResponse(response);
-
+    printResponse(response);    // display response from server
     /*-------------------------------------------------------------------------------------*/
     InitBBFile(argv[1]);
 

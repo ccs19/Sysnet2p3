@@ -21,8 +21,8 @@ typedef int bool;
 enum{false, true};
 
 typedef struct {
-    struct addr_in * ip;
-    int port;
+    struct in_addr ip;
+    in_port_t port;
 }PeerInfo;
 
 typedef struct {
@@ -48,6 +48,7 @@ const int HostNameMaxSize = 256;
 const int BUFFERSIZE = 256;
 const char* ServerShutdownMessage = "Server shutting down...";
 SendingInfo sendingInfo;
+PeerInfo peerInfo[MAX_HOSTS]; //array with data about peers
 
 //function prototypes
 void printNumberOfHosts(int numberOfArgs, const char *inputString);
@@ -64,21 +65,20 @@ int XMLParser(  const char* beginXml,
         char* clientMessage,
         char* token,
         int tokenSize);
+void PrintPeerInfo();
 
 void tellHost();
 
 int main(int argc, char** argv)
 {
-    printNumberOfHosts(argc, argv[1]); //get number of desired hosts
-    PeerInfo array[numberOfHosts];
-
     OpenSocket(SERVER_PORT);
-    AcceptConnections();
+    printNumberOfHosts(argc, argv[1]); //get number of desired hosts
+    DisplayInfo();
 
-    for(i = 0; i < numberOfHosts; ++i) //wait for hosts
-    {
-        //for number receive messages and stick in array, in_addr, int port
-    }
+    printf("Waiting for %d connections... \n", numberOfHosts - i);
+    AcceptConnections(); //captures all peer data
+
+    PrintPeerInfo();
 
     for(i = 0; i < numberOfHosts; ++i) //tell hosts
     {
@@ -242,16 +242,12 @@ void AcceptConnections()
     /*~~~~~~~~~~~~~~~~~~~~~Local vars~~~~~~~~~~~~~~~~~~~~~*/
     struct sockaddr_in clientAddress;
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-    DisplayInfo();
-    fflush(stdout);
-
     int i = 0;
     while(i < numberOfHosts)
     {
-        printf("Waiting for %d connections... ", numberOfHosts - i);
         HandleClientRequests(&clientAddress);
         ++i;
+        printf("Waiting for %d connections... \n", numberOfHosts - i);
     }
 }
 
@@ -272,21 +268,22 @@ void ExitOnError(char* errorMessage)
 /*  FUNCTION:   HandleClientRequests
     Depending on the string received from the client, we either print that it failed or parse
     the message, then close the socket and free the thread.
-    @param  ClientSocketPtr -- A pointer to the client socket typecasted to a void*
+    @param  ClientSocketPtr -- A pointer to the client socket typecasted to a void *
     @return           -- void
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 void HandleClientRequests(struct sockaddr_in* clientAddress)
 {
     fflush(stdout);
+
     /*~~~~~~~~~~~~~~~~~~~~~Local vars~~~~~~~~~~~~~~~~~~~~~*/
+//    struct sockaddr_in clientAddress;
     char stringBuffer[BUFFERSIZE];
     bzero(stringBuffer, BUFFERSIZE);
     socklen_t clientAddressLength = sizeof(clientAddress);
     socklen_t bufSize = BUFFERSIZE;
     int length;
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    fflush(stdout);
     length = recvfrom(
             ServerSocket,                     //Server socket
             stringBuffer,                     //Buffer for message
@@ -298,10 +295,22 @@ void HandleClientRequests(struct sockaddr_in* clientAddress)
     stringBuffer[length] = '\0';
     printf("Received message: %s\n", stringBuffer);
 
-    printf("Client IP: %s\n", inet_ntoa(clientAddress->sin_addr));
-    printf("Client Port:      %d\n", htons(clientAddress->sin_port));
+    peerInfo[i].ip = clientAddress->sin_addr;
+    peerInfo[i].port = ntohs(clientAddress->sin_port);
+
+    printf("Client IP: \t%s\n", inet_ntoa(clientAddress->sin_addr));
+    printf("Client Port: \t%d\n", htons(clientAddress->sin_port));
     fflush(stdout);
     ParseClientMessage(stringBuffer, clientAddress, length);
+}
+
+void PrintPeerInfo()
+{
+    int i;
+    for(i = 0; i < numberOfHosts; i++)
+    {
+        printf("Peer #%d IP: %s Port: %d\n", i, inet_ntoa(peerInfo[i].ip), htons(peerInfo[i].port));
+    }
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
