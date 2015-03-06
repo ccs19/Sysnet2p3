@@ -36,40 +36,40 @@ BBFile m_boardFile;
  const int READ_SPACE = 4;                  //Array index of where we expect a space to be
  const int READ_SEQUENCE_NUMBER = 5;        //Array index of where we expect the sequence number to be
 
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-/*  FUNCTION: main
-
-    Accepts a file in argv[1]
-
-    @param argc         --  number of args
-    @param argv         --  arg vector
- */
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-int main(int argc, const char* argv[])
-{
-    if(argc != 2)
-    {
-        printf("Usage: %s <filename>\n", argv[0]);
-        return -1;
-    }
-
-    InitBBFile(argv[1]);
-
-    while(PrintMenu());
-
-    //Threads TODO
-    //User - menu
-    //Network - token & IO
-
-    //token - command, selfIP, selfPort, nextIP, nextPort TODO
-
-    //establish ring TODO
-
-//    pthread_t tid;
-//    pthread_create(&tid, NULL, );
-
-    return 0;
-}
+///*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+///*  FUNCTION: main
+//
+//    Accepts a file in argv[1]
+//
+//    @param argc         --  number of args
+//    @param argv         --  arg vector
+// */
+///*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+//int main(int argc, const char* argv[])
+//{
+//    if(argc != 2)
+//    {
+//        printf("Usage: %s <filename>\n", argv[0]);
+//        return -1;
+//    }
+//
+//    InitBBFile(argv[1]);
+//
+//    while(PrintMenu());
+//
+//    //Threads TODO
+//    //User - menu
+//    //Network - token & IO
+//
+//    //token - command, selfIP, selfPort, nextIP, nextPort TODO
+//
+//    //establish ring TODO
+//
+////    pthread_t tid;
+////    pthread_create(&tid, NULL, );
+//
+//    return 0;
+//}
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: UpdateFile
@@ -179,8 +179,7 @@ int ReadFileBySequenceNumber(int sequenceNumber)
     char messageToPrint[MAX_MESSAGE_SIZE];
     char beginXml[MAX_MESSAGE_SIZE];
     char messageToParse[MAX_MESSAGE_SIZE];
-    int seekLength = (sequenceNumber - 1) * (MAX_MESSAGE_SIZE - 1);
-    //Sequences 1 starts at line 0, message has '\0'
+    int seekLength = (sequenceNumber - 1) * (MAX_MESSAGE_SIZE - 1); //Sequences 1 starts at line 0, message has '\0'
 
     OpenFile(m_boardFile.fileName);
 

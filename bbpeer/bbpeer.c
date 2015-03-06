@@ -11,9 +11,39 @@
 #include <string.h>
 #include <unistd.h>
 #include "bbpeer.h"
+#include "bbWriter.h"
 
-int main()
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*  FUNCTION: main
+
+    Accepts a file in argv[1]
+
+    @param argc         --  number of args
+    @param argv         --  arg vector
+ */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+int main(int argc, const char* argv[])
 {
+    if(argc != 2)
+    {
+        printf("Usage: %s <filename>\n", argv[0]);
+        return -1;
+    }
+
+    InitBBFile(argv[1]);
+
+    while(PrintMenu());
+
+    //Threads TODO
+    //User - menu
+    //Network - token & IO
+
+    //token - command, selfIP, selfPort, nextIP, nextPort TODO
+
+    //establish ring TODO
+
+//    pthread_t tid;
+//    pthread_create(&tid, NULL, );
 
     return 0;
 }
