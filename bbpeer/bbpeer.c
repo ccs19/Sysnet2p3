@@ -1,3 +1,10 @@
+/*
+ * bbpeer.h
+ * Systems and Networks II
+ * Project 3
+ * Christopher Schneider & Brett Rowberry
+ */
+
 #include "bbpeer.h"
 #include <arpa/inet.h>
 #include <netdb.h>

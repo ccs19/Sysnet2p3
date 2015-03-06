@@ -1,7 +1,7 @@
 /*
  * bbpeer.h
  * Systems and Networks II
- * Project 2
+ * Project 3
  *
  * This file describes the functions to be implemented by the UDPclient.
  * You may also implement any helper functions you deem necessary to complete the program.
