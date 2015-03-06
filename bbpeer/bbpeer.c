@@ -11,18 +11,17 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <errno.h> // for threading
 #include <signal.h>
 #include <unistd.h>
 #include <string.h>
-#include <arpa/inet.h>
 #include <sys/wait.h>
 
 #include <pthread.h>
 #include <semaphore.h>
 #include <sys/types.h>
-#include <AVFoundation/AVFoundation.h>
 
 #include "bbpeer.h"
 #include "bbWriter.h"
@@ -42,33 +41,49 @@ int main(int argc, const char* argv[])
 {
     pthread_t networkThread; //thread for token and IO
 
-    int socket;
-    int len;
-    char serverIP[16];
-    int serverPort;
-    char buffer[256+1];
-    struct sockaddr_in serverAddress;
-    struct in_addr * address;
-
     if(argc != 4)
     {
         printf("Usage: %s <filename><serverIP><serverPort>\n", argv[0]);
         return -1;
     }
 
-    memset(&serverAddress, 0, sizeof(serverAddress));   //clear memory
-    serverAddress.sin_family = AF_INET;                 //set family
-    serverAddress.sin_port = htons( atoi(argv[3]) );    //set port
-//    serverAddress. =     //set address
+    int                sockfd;
+    struct sockaddr_in servaddr;
+    char               response[256];
+    char               message[256];
 
-    gethostbyname(<#(char const *)#>)
+    int portNum = atoi (argv[3]);     // parse input parameter for port information
+    char hostname[16];
+    strcpy(hostname, argv[2]);
 
-    inet_aton(argv[2], serverAddress.sin_addr);
+    sockfd = createSocket(hostname, portNum, &servaddr);     // create a streaming socket
+    if (sockfd < 0) {
+        exit (1);
+    }
 
-    strcpy(serverIP, argv[2]); //get server info
+    printf ("Enter a message: ");
+    fflush(stdout);
+    fgets (message, 256, stdin);
+    // replace new line with null character
+    message[strlen(message)-1] = '\0';
 
-    printf("serverip: %s, serverport %d\n", serverIP, serverPort); //TODO remove
+    // send request to server
+    //if (sendRequest (sockfd, "<echo>Hello, World!</echo>", &servaddr) < 0) {
+    if (sendRequest (sockfd, message, &servaddr) < 0) {
+        closeSocket (sockfd);
+        exit (1);
+    }
 
+    if (receiveResponse(sockfd, response, 256) < 0) {
+        closeSocket (sockfd);
+        exit (1);
+    }
+    closeSocket (sockfd);
+
+    // display response from server
+    printResponse(response);
+
+    /*-------------------------------------------------------------------------------------*/
     InitBBFile(argv[1]);
 
 //    pthread_create(&networkThread, NULL, func, 0);
