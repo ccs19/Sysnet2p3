@@ -21,18 +21,18 @@ typedef int bool;
 enum{false, true};
 
 typedef struct {
-    struct addr_in ip;
+    struct addr_in * ip;
     int port;
 }PeerInfo;
 
 typedef struct {
-    struct addr_in senderIp;
+    struct addr_in * senderIp;
     int port;
     bool haveToken;
 }SendingInfo;
 
 typedef struct{
-    struct addr_in machineExitIP;
+    struct addr_in * machineExitIP;
     int machineExitPort;
     bool machineExit;
 }TokenInfo;
@@ -82,7 +82,7 @@ int main(int argc, char** argv)
 
     for(i = 0; i < numberOfHosts; ++i) //tell hosts
     {
-        tellHost();     //struct send - toIP, to port, int hasToken
+        tellHost();     //send - toIP, to port
     }
 
     return 0;

@@ -11,15 +11,15 @@ typedef int bool;
 enum{false, true};
 
 typedef struct {
-    struct addr_in * ip;
+    struct addr_in * IP;
     int port;
 }PeerInfo;
 
 typedef struct {
-    struct addr_in * senderIp;
+    struct addr_in * IP;
     int port;
     bool haveToken;
-}SendingInfo;
+}ServerInfo;
 
 typedef struct{
     struct addr_in * machineExitIP;

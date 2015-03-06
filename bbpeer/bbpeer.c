@@ -5,18 +5,34 @@
  * Christopher Schneider & Brett Rowberry
  */
 
-#include <arpa/inet.h>
+
+#include <stdio.h> //header files from book
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <netdb.h>
-#include <stdio.h>
-#include <string.h>
+#include <errno.h> // for threading
+#include <signal.h>
 #include <unistd.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <sys/wait.h>
+
+#include <pthread.h>
+#include <semaphore.h>
+#include <sys/types.h>
+#include <AVFoundation/AVFoundation.h>
+
 #include "bbpeer.h"
 #include "bbWriter.h"
+
+ServerInfo serverInfo;
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: main
 
-    Accepts a file in argv[1]
+    Accepts a file in argv[1]. The main/user thread operates the menu.
 
     @param argc         --  number of args
     @param argv         --  arg vector
@@ -24,19 +40,40 @@
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int main(int argc, const char* argv[])
 {
-    if(argc != 2)
+    pthread_t networkThread; //thread for token and IO
+
+    int socket;
+    int len;
+    char serverIP[16];
+    int serverPort;
+    char buffer[256+1];
+    struct sockaddr_in serverAddress;
+    struct in_addr * address;
+
+    if(argc != 4)
     {
-        printf("Usage: %s <filename>\n", argv[0]);
+        printf("Usage: %s <filename><serverIP><serverPort>\n", argv[0]);
         return -1;
     }
 
+    memset(&serverAddress, 0, sizeof(serverAddress));   //clear memory
+    serverAddress.sin_family = AF_INET;                 //set family
+    serverAddress.sin_port = htons( atoi(argv[3]) );    //set port
+//    serverAddress. =     //set address
+
+    gethostbyname(<#(char const *)#>)
+
+    inet_aton(argv[2], serverAddress.sin_addr);
+
+    strcpy(serverIP, argv[2]); //get server info
+
+    printf("serverip: %s, serverport %d\n", serverIP, serverPort); //TODO remove
+
     InitBBFile(argv[1]);
 
-    while(PrintMenu());
+//    pthread_create(&networkThread, NULL, func, 0);
+    while(PrintMenu()); //main/user thread for menu
 
-    //Threads TODO
-    //User - menu
-    //Network - token & IO
 
     //token - command, selfIP, selfPort, nextIP, nextPort TODO
 
