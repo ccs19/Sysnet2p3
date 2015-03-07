@@ -48,6 +48,7 @@ const int MAX_MESSAGE_SIZE = 256;
 //Updates file pointer to bottom of stream
 int UpdateFile()
 {
+    puts("In UpdateFile");
     int count = 1;
     if(fseek(m_boardFile.file, 0, SEEK_SET) == 0)                               //set fp to beginning of file
     {

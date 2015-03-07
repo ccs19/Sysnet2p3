@@ -76,8 +76,12 @@ int main(int argc, const char* argv[])
     receiveServerResponse(serverSocketFD, info, sizeof(SendingInfo)); //closes socket when received
     
     sprintf(message, "Hey neighbor!"); //Do stuff with your neighbor
+    
+    pthread_create(&mainThread, NULL, (void*)&MenuRunner, (void*)&(info));
+
     pthread_create(&networkThread, NULL, (void *)receiveMessage, (void*)&(info->exitingMachineInfo));
-    neighborSocketFD = createSocket(inet_ntoa(info->neighborInfo.sin_addr), info->neighborInfo.sin_port, &info->neighborInfo);
+    neighborSocketFD = createSocket(inet_ntoa(info->neighborInfo.sin_addr), ntohs(info->neighborInfo.sin_port), &info->neighborInfo);
+    sleep(5);
     sendto(
             neighborSocketFD,                //Client socket
             (void*)message,           //String buffer to send to client
@@ -87,14 +91,14 @@ int main(int argc, const char* argv[])
             sizeof(struct sockaddr)                 //Length of clientAddress
         );
         
-    pthread_create(&mainThread, NULL, (void*)&MenuRunner, (void*)&(info));
-
     //establish ring TODO
+    while(1);
     return 0;
 }
 
 void MenuRunner(void * pInfo)
 {
+    puts("I'm in menu runner!!!");
     SendingInfo* info = (SendingInfo *)pInfo;
 
     while (!info->machineHasExited)
@@ -107,7 +111,23 @@ void receiveMessage(void* myInfo)
 {
     struct sockaddr_in* sockAddrnInfo = (struct sockaddr_in*)myInfo;
     int mySocket;
+    int length;
     OpenSocket(0, &mySocket, sockAddrnInfo);
+    char stringBuffer[256];
+    socklen_t socketLength = sizeof(sockAddrnInfo);
+    
+    stringBuffer[0] = '\0';
+        length = recvfrom(
+            mySocket,                     //Server socket
+            stringBuffer,                     //Buffer for message
+            256,             //Size of buffer
+            0,                                //Flags
+            (struct sockaddr*)sockAddrnInfo,  //Source address
+            &socketLength              //Size of source address
+    );
+    
+    printf("My message is: %s\n", stringBuffer);
+    fflush(stdout);
 }
 
 void OpenSocket(int port, int* mySocket, struct sockaddr_in* sockAddrnInfo)
@@ -181,7 +201,7 @@ int createSocket(char * serverName, int port, struct sockaddr_in * dest)
     dest->sin_family = AF_INET;
     memcpy( (void *)&dest->sin_addr, (void *)hostptr->h_addr, hostptr->h_length);
     dest->sin_port = htons( (u_short)port );        /* set destination port number */
-    printf("port: %d\n", htons(dest->sin_port));
+    printf("port: %d\n", ntohs(dest->sin_port));
     return socketFD;
 }
 

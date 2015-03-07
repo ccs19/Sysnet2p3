@@ -5,7 +5,6 @@
  * Christopher Schneider & Brett Rowberry
  */
 
-
 typedef enum
 {
     UpdateFailed,
