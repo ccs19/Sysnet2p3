@@ -295,11 +295,32 @@ void HandleClientRequests(struct sockaddr_in* clientAddress)
     stringBuffer[length] = '\0';
     printf("Received message: %s\n", stringBuffer);
 
-    peerInfo[i].ip = clientAddress->sin_addr;
-    peerInfo[i].port = ntohs(clientAddress->sin_port);
+    char clientAddressString[16];
+    char clientPortString[6];
 
-    printf("Client IP: \t%s\n", inet_ntoa(clientAddress->sin_addr));
-    printf("Client Port: \t%d\n", htons(clientAddress->sin_port));
+    sprintf(clientAddressString, "%s", inet_ntoa(clientAddress->sin_addr));
+    sprintf(clientPortString, "%hu", htons(clientAddress->sin_port));
+
+    printf("Client IP: %s\n", clientAddressString);
+    printf("Client port: %s\n", clientPortString);
+
+    struct hostent *hostptr;
+
+    if( (hostptr = gethostbyname(clientAddressString) ) == NULL)
+    {
+        perror("gethostbyname() failed, exit\n");
+        return;
+    }
+
+    //    peerInfo[i].ip = clientAddressString;
+//    peerInfo[i].port = ntohs(clientAddress->sin_port);
+
+//    memset((void*)peerInfo[i].ip, 0, sizeof(struct sockaddr_in));    /* zero the struct */
+    memcpy( (void *)&peerInfo[i].ip, (void *)hostptr->h_addr, hostptr->h_length);
+    peerInfo->port = htons( (u_short)clientPortString );        /* set destination port number */
+
+
+
     fflush(stdout);
     ParseClientMessage(stringBuffer, clientAddress, length);
 }
@@ -309,7 +330,7 @@ void PrintPeerInfo()
     int i;
     for(i = 0; i < numberOfHosts; i++)
     {
-        printf("Peer #%d IP: %s Port: %d\n", i, inet_ntoa(peerInfo[i].ip), htons(peerInfo[i].port));
+        printf("Peer #%d IP: %s Port: %d\n", i, inet_ntoa(peerInfo[i].ip), ntohs(peerInfo[i].port));
     }
 }
 

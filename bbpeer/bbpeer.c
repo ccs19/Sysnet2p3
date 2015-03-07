@@ -54,7 +54,7 @@ int main(int argc, const char* argv[])
 
     int portNum = atoi (argv[3]);     // parse input parameter for port information
     char hostname[16];
-    strcpy(hostname, argv[2]);
+    strcpy(hostname, argv[2]);       // get hostname
 
     sockfd = createSocket(hostname, portNum, &servaddr);     // create a streaming socket
     if (sockfd < 0) {
