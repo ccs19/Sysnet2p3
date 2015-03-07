@@ -5,15 +5,15 @@ CLIENTOBJECTS = ./bbpeer/bbwriter.c ./bbpeer/bbpeer.c
 SERVERNAME = ./bbserver/bbserver
 CLIENTNAME = ./bbpeer/bbpeer
 TODELETE = $(SERVERNAME) $(CLIENTNAME) *.o
-LIBS = -lpthread
+LIBS = -pthread
 
 all: $(SERVERNAME) $(CLIENTNAME)
 
 $(SERVERNAME): $(SERVEROBJECTS)
-	$(CC) $(CFLAGS) $(SERVEROBJECTS) -o $(SERVERNAME) $(LIBS)
+	$(CC) $(CFLAGS) $(SERVEROBJECTS) $(LIBS) -o $(SERVERNAME) 
 
 $(CLIENTNAME): $(CLIENTOBJECTS)
-	$(CC) $(CFLAGS) $(CLIENTOBJECTS) -o $(CLIENTNAME)
+	$(CC) $(CFLAGS) $(CLIENTOBJECTS) $(LIBS) -o $(CLIENTNAME)
 
 .PHONY: clean
 clean:

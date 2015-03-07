@@ -6,6 +6,8 @@
  * This file describes the functions to be implemented by the UDPclient.
  * You may also implement any helper functions you deem necessary to complete the program.
  */
+ 
+ #include "common.h"
 
 typedef int bool;
 enum{false, true};
@@ -50,7 +52,7 @@ int createSocket(char*, int, struct sockaddr_in *);
  *
  * return   - 0, if no error; otherwise, a negative number indicating the error
  */
-int sendRequest(int, char*, struct sockaddr_in*);
+void sendRequest(int, char*, struct sockaddr_in*);
 
 /*
  * Receives the server's response formatted as an XML text string.
@@ -58,9 +60,8 @@ int sendRequest(int, char*, struct sockaddr_in*);
  * sockfd    - the socket identifier
  * response  - the server's response as an XML formatted string to be filled in by this function into the specified string array
  *
- * return   - 0, if no error; otherwise, a negative number indicating the error
  */
-int receiveResponse(int, char*, int);
+void receiveServerResponse(int, SendingInfo*, int);
 
 /*
  * Prints the response to the screen in a formatted way.
@@ -78,3 +79,9 @@ void printResponse(char*);
  * return - 0, if no error; otherwise, a negative number indicating the error
  */
 int closeSocket(int);
+
+void receiveMessage(void*);
+void OpenSocket(int, int*, struct sockaddr_in*);
+void InitAddressStruct(int);
+void BindSocket(int*, struct sockaddr_in*);
+void MenuRunner(void*);

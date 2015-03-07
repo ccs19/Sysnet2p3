@@ -23,9 +23,13 @@
 #include <sys/types.h>
 
 #include "bbpeer.h"
-#include "bbWriter.h"
+#include "bbwriter.h"
+#include "common.h"
 
 ServerInfo serverInfo;
+
+//Constants
+// const int MAX_MESSAGE_SIZE = 256;
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: main
@@ -39,64 +43,102 @@ ServerInfo serverInfo;
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int main(int argc, const char* argv[])
 {
-    pthread_t networkThread; //thread for token and IO
-
     if(argc != 4)
     {
-        printf("Usage: %s <filename><serverIP><serverPort>\n", argv[0]);
+        printf("Usage: %s <filename> <serverIP> <serverPort>\n", argv[0]);
         return -1;
     }
 
-    int                sockfd;
-    struct sockaddr_in servaddr;
-    char               response[256];
-    char               message[256];
+    pthread_t networkThread; //thread for token and IO
+    pthread_t mainThread;    //operates the menu
+    InitBBFile(argv[1]);
+
+    int serverSocketFD;
+    int neighborSocketFD;
+    struct sockaddr_in serverAddress;
+
+    SendingInfo* info = malloc(sizeof(SendingInfo));
+    memset(info, 0, sizeof(SendingInfo));
+    char message[256];
 
     int portNum = atoi (argv[3]);     // parse input parameter for port information
-    char hostname[16];
-    strcpy(hostname, argv[2]);       // get hostname
+    char serverName[256];
+    strcpy(serverName, argv[2]);       // get server hostname
 
-    sockfd = createSocket(hostname, portNum, &servaddr);     // create a streaming socket
-    if (sockfd < 0) {
-        exit (1);
-    }
+    serverSocketFD = createSocket(serverName, portNum, &serverAddress);     // create a streaming socket
 
-    printf ("Enter a message: ");
+    printf ("Sending info to server...");
     fflush(stdout);
     fgets (message, 256, stdin);
     message[strlen(message) - 1] = '\0';     // replace new line with null character
 
-    if (sendRequest (sockfd, message, &servaddr) < 0) {     // send request to server
-        closeSocket (sockfd);
-        exit (1);
-    }
-
-    if (receiveResponse(sockfd, response, 256) < 0) {
-        closeSocket (sockfd);
-        exit (1);
-    }
-
-    closeSocket (sockfd);
-    printResponse(response);    // display response from server
-    /*-------------------------------------------------------------------------------------*/
-    InitBBFile(argv[1]);
-
-//    pthread_create(&networkThread, NULL, func, 0);
-    while(PrintMenu()); //main/user thread for menu
-
-
-    //token - command, selfIP, selfPort, nextIP, nextPort TODO
+    sendRequest(serverSocketFD, message, &serverAddress);
+    receiveServerResponse(serverSocketFD, info, sizeof(SendingInfo)); //closes socket when received
+    
+    sprintf(message, "Hey neighbor!"); //Do stuff with your neighbor
+    pthread_create(&networkThread, NULL, (void *)receiveMessage, (void*)&(info->exitingMachineInfo));
+    neighborSocketFD = createSocket(inet_ntoa(info->neighborInfo.sin_addr), info->neighborInfo.sin_port, &info->neighborInfo);
+    sendto(
+            neighborSocketFD,                //Client socket
+            (void*)message,           //String buffer to send to client
+            256,                       //Length of buffer
+            0,                                  //flags
+            (struct sockaddr*)&info->neighborInfo,    //Destination
+            sizeof(struct sockaddr)                 //Length of clientAddress
+        );
+        
+    pthread_create(&mainThread, NULL, (void*)&MenuRunner, (void*)&(info));
 
     //establish ring TODO
-
-//    pthread_t tid;
-//    pthread_create(&tid, NULL, );
-
     return 0;
 }
 
-//Constants
-const int BUFFERSIZE = 256;
+void MenuRunner(void * pInfo)
+{
+    SendingInfo* info = (SendingInfo *)pInfo;
+
+    while (!info->machineHasExited)
+    {
+       info->machineHasExited = PrintMenu();
+    }
+}
+
+void receiveMessage(void* myInfo)
+{
+    struct sockaddr_in* sockAddrnInfo = (struct sockaddr_in*)myInfo;
+    int mySocket;
+    OpenSocket(0, &mySocket, sockAddrnInfo);
+}
+
+void OpenSocket(int port, int* mySocket, struct sockaddr_in* sockAddrnInfo)
+{
+    char hostname[256];
+
+    if( ( *mySocket =  socket(PF_INET, SOCK_DGRAM, 0) ) <  0)  //If socket fails
+        printf("Error creating socket");
+
+    if(gethostname(hostname, sizeof(hostname)) < 0)               //If getting hostname fails
+        printf("Error acquiring hostname. Exiting");
+
+    //InitAddressStruct(port); TODO
+    BindSocket(mySocket, sockAddrnInfo);
+    
+}
+
+/*void InitAddressStruct(int port)
+{
+    memset((void*)&ServerAddress, '0', (size_t)sizeof(ServerAddress));
+    ServerAddress.sin_family = AF_INET;
+    memcpy( (void *)&ServerAddress.sin_addr, (void *)HostByName->h_addr, HostByName->h_length);
+    ServerAddress.sin_port = htons(port);
+}*/
+
+void BindSocket(int* mySocket, struct sockaddr_in* sockAddrnInfo)
+{
+    
+    if( ( bind( *mySocket, (struct sockaddr *)sockAddrnInfo, sizeof(struct sockaddr_in)) )  < 0)
+        printf("Failed to bind socket"); //If binding of socket fails
+}
 
 /*
  * Creates a datagram socket and connects to a server.
@@ -119,15 +161,15 @@ int createSocket(char * serverName, int port, struct sockaddr_in * dest)
     if( (socketFD = socket(AF_INET, SOCK_DGRAM, 0) ) < 0)
     {
         printf("Socket creation failed\n");
-        return -1;
+        exit(1);
     }
     if( (hostptr = gethostbyname(serverName) ) == NULL)
     {
         perror("gethostbyname() failed, exit\n");
-        return -1;
+        exit(1);
     }
 
-    int i=0;
+    int i = 0;
     printf("\nIP: " );
     while(hostptr->h_addr_list[i] != 0)
     {
@@ -142,6 +184,7 @@ int createSocket(char * serverName, int port, struct sockaddr_in * dest)
     printf("port: %d\n", htons(dest->sin_port));
     return socketFD;
 }
+
 /*
  * Sends a request for service to the server. This is an asynchronous call to the server,
  * so do not wait for a reply in this function.
@@ -150,13 +193,16 @@ int createSocket(char * serverName, int port, struct sockaddr_in * dest)
  * request - the request to be sent encoded as a string
  * dest    - the server's address information
  *
- * return   - 0, if no error; otherwise, a negative number indicating the error
  */
-int sendRequest(int socketFD, char * request, struct sockaddr_in * dest)
+void sendRequest(int socketFD, char * request, struct sockaddr_in * dest)
 {
     socklen_t destSize = sizeof(struct sockaddr_in);
     int size = sendto(socketFD, request, strlen(request), 0, (struct sockaddr *) dest, destSize);
-    return size;
+    if(size < 0)
+    {
+        closeSocket(socketFD);
+        exit(1);
+    }
 }
 
 /*
@@ -165,15 +211,22 @@ int sendRequest(int socketFD, char * request, struct sockaddr_in * dest)
  * sockfd    - the socket identifier
  * response  - the server's response as an XML formatted string to be filled in by this function into the specified string array
  *
- * return   - 0, if no error; otherwise, a negative number indicating the error
  */
-int receiveResponse(int socketFD, char * response, int size)
+void receiveServerResponse(int socketFD, SendingInfo* response, int size)
 {
-    int length = 0;
-    socklen_t bufSize = (socklen_t)size;
-    length = recvfrom(socketFD, response, bufSize, 0, NULL, NULL);
-    response[length] = '\0';
-    return length;
+    socklen_t bufSize = sizeof(SendingInfo);
+    int length = (int)recvfrom(socketFD, response, bufSize, 0, NULL, NULL);
+    if(length < 0)
+    {
+        closeSocket(socketFD);
+        exit(1);
+    }
+
+    printf("Neighbor IP: %s Port: %d\n", 
+        inet_ntoa(response->neighborInfo.sin_addr), 
+        ntohs(response->neighborInfo.sin_port));
+        
+    closeSocket(socketFD);
 }
 
 /*
@@ -196,6 +249,6 @@ void printResponse(char * response)
  */
 int closeSocket(int socketFD)
 {
-    close(socketFD);
-    return 0;
+    int returnVal = close(socketFD);
+    return returnVal;
 }
