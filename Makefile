@@ -1,9 +1,9 @@
 CC = gcc
 CFLAGS = -g -Wall
-SERVEROBJECTS = bbserver.c
-CLIENTOBJECTS = bbWriter.c
-SERVERNAME = bbserver
-CLIENTNAME = bbpeer
+SERVEROBJECTS = ./bbserver/bbserver.c
+CLIENTOBJECTS = ./bbpeer/bbwriter.c ./bbpeer/bbpeer.c
+SERVERNAME = ./bbserver/bbserver
+CLIENTNAME = ./bbpeer/bbpeer
 TODELETE = $(SERVERNAME) $(CLIENTNAME) *.o
 LIBS = -lpthread
 
