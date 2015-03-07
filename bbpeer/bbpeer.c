@@ -77,7 +77,7 @@ int main(int argc, const char* argv[])
     
     sprintf(message, "Hey neighbor!"); //Do stuff with your neighbor
     
-    pthread_create(&mainThread, NULL, (void*)&MenuRunner, (void*)&(info));
+    pthread_create(&mainThread, NULL, (void*)&MenuRunner, (void*)&(info)); //shouldn't come up until token passing begins
 
     pthread_create(&networkThread, NULL, (void *)receiveMessage, (void*)&(info->exitingMachineInfo));
     neighborSocketFD = createSocket(inet_ntoa(info->neighborInfo.sin_addr), ntohs(info->neighborInfo.sin_port), &info->neighborInfo);
@@ -92,6 +92,7 @@ int main(int argc, const char* argv[])
         );
         
     //establish ring TODO
+    //join threads TODO
     while(1);
     return 0;
 }
