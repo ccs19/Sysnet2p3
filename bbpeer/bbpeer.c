@@ -54,32 +54,88 @@ int main(int argc, const char* argv[])
  */
 void ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[])
 {
-    int length;
+    srand(time(NULL) + info->exitingMachineInfo.sin_port); //Init random seed
+    int myRandomNumber = rand();
+    int highestRandomNumber = 0;
+    int loopNum = 0;
+    const int TOKEN_SET = -1;
 
-    puts("Choose: about to send");
-    sprintf(stringBuffer, "%d", mySocket); //TODO send unique ID, like IP_port, do strcmp to find largest
+    printf("My random number %d\n", myRandomNumber + info->exitingMachineInfo.sin_port);
 
-    sendto(
-            neighborSocket,                     //Client socket
-            (void*)stringBuffer,                //String buffer to send to client
-            256,                                //Length of buffer
-            0,                                  //flags
-            (struct sockaddr*)&info->neighborInfo,    //Destination
-            (*sockAddrLength)                          //Length of clientAddress
-    );
+    while(1) {
+        int neighborNumber;
+        if(0 == loopNum) highestRandomNumber = myRandomNumber; //If first time through loop
 
-    puts("Choose: about to receive");
+        if(0 == loopNum ||                              //If first time through the loop
+                highestRandomNumber > myRandomNumber);  //Or forward highest number to neighbor
+        {
+            printf("Sending %d\n", highestRandomNumber);
+            sendto(
+                    neighborSocket,                              //Client socket
+                    (void *)&highestRandomNumber,                //Current highest random number
+                    sizeof(int),                                 //Length of buffer
+                    0,                                           //flags
+                    (struct sockaddr *) &info->neighborInfo,     //Destination
+                    (*sockAddrLength)                            //Length of clientAddress
+            );
+        }
+        recvfrom(
+                mySocket,                     //Server socket
+                (void*)&neighborNumber,                     //Buffer for message
+                sizeof(int),             //Size of buffer
+                0,                                //Flags
+                (struct sockaddr *) &info->exitingMachineInfo,  //Source address
+                sockAddrLength             //Size of source address
+        );
+        if(neighborNumber > myRandomNumber)
+        {
+            highestRandomNumber = neighborNumber;
+        }
+        else if(TOKEN_SET == neighborNumber) //-1 is signal to exit loop
+        {
+            info->hasToken = 0;
+            sendto(
+                    neighborSocket,                              //Client socket
+                    (void *)&TOKEN_SET,                          //Token is initialized
+                    sizeof(int),                                 //Length of buffer
+                    0,                                           //flags
+                    (struct sockaddr *) &info->neighborInfo,     //Destination
+                    (*sockAddrLength)                            //Length of clientAddress
+            );
+            printf("I don't have the token\n");
+            break;                    //Break out of while loop
+        }
+        else if(neighborNumber == myRandomNumber) //My number is highest, so I get the token first
+        {
+            info->hasToken = 1;
+            sendto(
+                    neighborSocket,                              //Client socket
+                    (void *)&TOKEN_SET,                          //Token is initialized
+                    sizeof(int),                                 //Length of buffer
+                    0,                                           //flags
+                    (struct sockaddr *) &info->neighborInfo,     //Destination
+                    (*sockAddrLength)                            //Length of clientAddress
+            );
 
-    length = recvfrom(
-            mySocket,                     //Server socket
-            stringBuffer,                     //Buffer for message
-            256,             //Size of buffer
-            0,                                //Flags
-            (struct sockaddr*)&info->exitingMachineInfo,  //Source address
-            sockAddrLength             //Size of source address
-    );
+            recvfrom(
+                    mySocket,                     //Server socket
+                    (void *)&neighborNumber,                     //Buffer for message
+                    sizeof(int),             //Size of buffer
+                    0,                                //Flags
+                    (struct sockaddr *) &info->exitingMachineInfo,  //Source address
+                    sockAddrLength             //Size of source address
+            ); //Wait for all clients to receive signal to exit
 
-    printf("String buffer received: %s\n", stringBuffer);
+            printf("I have the token\n");
+            break; //Token ring initialized
+        }
+
+
+        printf("Received %d, highest number is %d\n", neighborNumber, highestRandomNumber );
+
+        loopNum++;
+
+    }
 }
 
 /*
