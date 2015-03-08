@@ -24,7 +24,7 @@
 
 #include "bbpeer.h"
 #include "bbwriter.h"
-#include "common.h"
+#include "../common.h"
 
 ServerInfo serverInfo;
 

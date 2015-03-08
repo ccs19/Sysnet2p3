@@ -12,38 +12,30 @@
 #include <netdb.h> //For gethostbyname()
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <string.h> //for memset
 
 #include "bbserver.h"
+#include "../common.h"
 
 #define MIN_HOSTS 1
 #define MAX_HOSTS 10
 
 //Globals
 int numberOfHosts = -1;
-int i;
 int ServerSocket = 0;
 struct hostent *HostByName = NULL;
 struct sockaddr_in ServerAddress;
-struct sockaddr_in peerInfo[10];
+struct sockaddr_in peerInfo[MAX_HOSTS];
 
-const int SERVER_PORT = 50000;
 const int HostNameMaxSize = 256;
 const int BUFFERSIZE = 256;
-const char* ServerShutdownMessage = "Server shutting down...";
 
 int main(int argc, char** argv)
 {
-    OpenSocket(SERVER_PORT);
+    OpenSocket(0);
     printNumberOfHosts(argc, argv[1]);  //get number of desired hosts
     DisplayServerInfo();                //displays info about self
     AcceptConnections();                //captures all peer info
     DisplayPeerInfo();                  //displays info about all peers
-
-    for(i = 0; i < numberOfHosts; ++i) //tell hosts
-    {
-        tellHost();     //send - toIP, to port
-    }
 
     return 0;
 }
@@ -135,16 +127,7 @@ void BindSocket()
         ExitOnError("Failed to bind socket"); //If binding of socket fails
 }
 
-/*
- * Tells a host...
- *
- */
-void tellHost()
-{
-    
-    //last: to = 1, token = 1
-    //else: to = self + 1, token = 0
-}
+
 
 /*
  * Receives the server's response formatted as an XML text string.
@@ -200,12 +183,10 @@ void AcceptConnections()
     printf("Waiting for %d connections... \n", numberOfHosts - i);
     while(i < numberOfHosts)
     {
-        /*~~~~~~~~~~~~~~~~~~~~~Local vars~~~~~~~~~~~~~~~~~~~~~*/
         HandleClientRequests(&peerInfo[i]);
         ++i;
         printf("Waiting for %d connections... \n", numberOfHosts - i);
     }
-    //Fill in structs with their neighbor info here
     
     for(i = 0; i < numberOfHosts; i++)
     {
@@ -252,18 +233,16 @@ void ExitOnError(char* errorMessage)
 void HandleClientRequests(struct sockaddr_in* clientAddress)
 {
     fflush(stdout);
-
     /*~~~~~~~~~~~~~~~~~~~~~Local vars~~~~~~~~~~~~~~~~~~~~~*/
     char stringBuffer[BUFFERSIZE];
     bzero(stringBuffer, BUFFERSIZE);
     socklen_t clientAddressLength = sizeof(clientAddress);
-    socklen_t bufSize = BUFFERSIZE;
-    int length;
+    ssize_t length;
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     length = recvfrom(
             ServerSocket,                     //Server socket
             stringBuffer,                     //Buffer for message
-            bufSize,             //Size of buffer
+            (socklen_t)BUFFERSIZE,             //Size of buffer
             0,                                //Flags
             (struct sockaddr*)clientAddress,  //Source address
             &clientAddressLength              //Size of source address
@@ -273,16 +252,6 @@ void HandleClientRequests(struct sockaddr_in* clientAddress)
     {
         fprintf(stderr, "rcvfrom() failed.\n");
     }
-
-    char clientAddressString[16];
-    char clientPortString[6];
-
-    sprintf(clientAddressString, "%s", inet_ntoa(clientAddress->sin_addr));
-    sprintf(clientPortString, "%hu", htons(clientAddress->sin_port));
-
-    printf("Client IP: %s\n", clientAddressString);
-    printf("Client port: %s\n", clientPortString);
-    puts("");
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -292,44 +261,10 @@ void HandleClientRequests(struct sockaddr_in* clientAddress)
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 void DisplayPeerInfo()
 {
-    int i;
+    int i = 0;
     for(i = 0; i < numberOfHosts; i++)
     {
         printf("Peer #%d IP: %s Port: %d\n", i, inet_ntoa(peerInfo[i].sin_addr), ntohs(peerInfo[i].sin_port));
     }
 }
 
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-/*  FUNCTION:   ParseClientMessage
-    Handles the message for the client and sends a message back to the client
-    @param  clientMessage        -- Pointer to message received by client
-    @param  ClientSocket         -- The socket to the client
-    @return                      -- void
- */
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-void ParseClientMessage(char* clientMessage,  struct sockaddr_in* clientAddress, int clientSocket)
-{
-    /*~~~~~~~~~~~~~~~~~~~~~Local vars~~~~~~~~~~~~~~~~~~~~~*/
-    socklen_t clientAddressLength = sizeof(struct sockaddr_in);
-    /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-    //Initialize struct to return to client here
-    size_t sendingInfoLength = sizeof(SendingInfo);
-    SendingInfo sendingInfo;
-    // sendingInfo.someValue = 65781685; //neighbor
-    sendingInfo.hasToken = -1;
-    sendingInfo.machineHasExited = 0;
-    
-    if(     (sendto(
-            ServerSocket,                //Client socket
-            (void*)&sendingInfo,           //String buffer to send to client
-            sendingInfoLength,                       //Length of buffer
-            0,                                  //flags
-            (struct sockaddr*)clientAddress,    //Destination
-            clientAddressLength                 //Length of clientAddress
-
-    )) < 0) //If sendto fails
-        {
-        printf("Failed to send\n");
-        }
-}
