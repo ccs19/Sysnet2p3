@@ -12,11 +12,8 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <sys/types.h>
-
 #include "bbpeer.h"
 #include "bbwriter.h"
-#include "../common.h"
-
 
 pthread_t networkThread; //thread for token passing
 pthread_t mainThread;    //operates the menu
@@ -31,6 +28,8 @@ pthread_t mainThread;    //operates the menu
     @param argc         --  number of args
     @param argv         --  arg vector
  */
+void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
+
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int main(int argc, const char* argv[])
 {
@@ -59,13 +58,7 @@ int main(int argc, const char* argv[])
 
     sendRequest(serverSocketFD, "", &serverAddress);
     receiveServerResponse(serverSocketFD, info, sizeof(SendingInfo)); //closes socket when received
-
-    
-
-
     pthread_create(&networkThread, NULL, (void *)InitNetworkThread, (void*)(info));
-
-        
     //establish ring TODO
     //join threads TODO
     while(1);
@@ -88,29 +81,32 @@ void InitNetworkThread(void* pInfo)
     SendingInfo* info = (SendingInfo*)pInfo;
     int mySocket;
     int neighborSocket;
-    int length;
+    socklen_t sockAddrLength = sizeof(struct sockaddr);
     char stringBuffer[BUFFERSIZE];
     stringBuffer[0] = '\0';
     strcat(stringBuffer, "Hello!");
 
-    printf("%s %d %d\n", inet_ntoa(info->neighborInfo.sin_addr), info->neighborInfo.sin_port, ntohs(info->neighborInfo.sin_port));
-
     //Init sockets
     OpenSocket(0, &mySocket, &info->exitingMachineInfo);
-
-    socklen_t sockAddrLength = sizeof(struct sockaddr);
-
-    fflush(stdout);
     neighborSocket = createSocket(inet_ntoa(info->neighborInfo.sin_addr), ntohs(info->neighborInfo.sin_port), &info->neighborInfo);
+    sleep(1); //Give time for all peers to open socket
 
+    AcquireToken(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
 
+    printf("Message: %s\n", stringBuffer);
+    fflush(stdout);
+    pthread_create(&mainThread, NULL, (void*)&MenuRunner, (void*)&(info)); //shouldn't come up until token passing begins
+}
+
+void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]) {
+    int length;
     sendto(
             neighborSocket,                //Client socket
             (void*)stringBuffer,           //String buffer to send to client
             256,                       //Length of buffer
             0,                                  //flags
             (struct sockaddr*)&info->neighborInfo,    //Destination
-            sockAddrLength                 //Length of clientAddress
+            (*sockAddrLength)                 //Length of clientAddress
     );
 
 
@@ -120,11 +116,8 @@ void InitNetworkThread(void* pInfo)
             256,             //Size of buffer
             0,                                //Flags
             (struct sockaddr*)&info->exitingMachineInfo,  //Source address
-            &sockAddrLength             //Size of source address
+            sockAddrLength             //Size of source address
     );
-    printf("Message: %s\n", stringBuffer);
-    fflush(stdout);
-    pthread_create(&mainThread, NULL, (void*)&MenuRunner, (void*)&(info)); //shouldn't come up until token passing begins
 }
 
 void OpenSocket(int port, int* mySocket, struct sockaddr_in* sockAddrnInfo)
