@@ -3,36 +3,34 @@
  * Systems and Networks II
  * Project 3
  * Christopher Schneider & Brett Rowberry
+ *
  */
 
+#include "bbWriter.h"
+
+
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include <errno.h>
-#include <pthread.h>
-#include <semaphore.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#include "bbWriter.h"
 
 //Globals
 BBFile m_boardFile;
 
 //User options:
-#define ERROR 0
 #define WRITE '1'
 #define READ '2'
 #define LIST '3'
 #define EXIT '4'
 #define INVALID '5'
 
+
+
 //Constants
  const int MAX_MESSAGE_SIZE = 256;
- const char * endXml = "</message>\n";
- const int lengthendXML = 11;
- const int READ_STRING_LENGTH = 4;          //Length of read string
- const int READ_SPACE = 4;                  //Array index of where we expect a space to be
+ const char* endXml = "</message>";
+ const int READ_STRING_LENGTH = 4; //Length of read string
+ const int READ_SPACE = 4;         //Array index of where we expect a space to be
  const int READ_SEQUENCE_NUMBER = 5;        //Array index of where we expect the sequence number to be
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -46,58 +44,54 @@ BBFile m_boardFile;
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int main(int argc, const char* argv[])
 {
-    if(argc != 2)
+    if(argc < 2 || argc > 2)
     {
         printf("Usage: %s <filename>\n", argv[0]);
-        return -1;
     }
-
-    InitBBFile(argv[1]);
-
-    while(PrintMenu());
-
-    //Threads TODO
-    //User - menu
-    //Network - token & IO
-
-    //token - command, selfIP, selfPort, nextIP, nextPort TODO
-
-    //establish ring TODO
-
-//    pthread_t tid;
-//    pthread_create(&tid, NULL, );
-
+    else
+    {
+        if(0 == OpenFile(argv[1])) //Try to open file
+        {
+            printf("Failed to open file %s\n", argv[1]);
+            return 0;
+        }
+        if(InitBBFile() == 0) //Initialize BB File struct
+        {
+            PrintErrorMessage(); //This only fails if UpdateFile() fails
+            fflush(stdout);
+            return 0;
+        }
+        while(PrintMenu());
+        fclose(m_boardFile.file); //Close file
+    }
     return 0;
 }
+
+
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: UpdateFile
 
-    Reads the file and updates the message nextMessageNumber variable.
+    Reads the file and updates the message messageCount variable.
 
-    @return     -- Number of next message. On failure, lastError is set and 0 returned.
+    @return     -- On failure, lastError is set and 0 returned. On success, returns 1
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 //Updates file pointer to bottom of stream
+//Return number of next message on success, 0 on failure
 int UpdateFile()
 {
     int count = 1;
-    if(fseek(m_boardFile.file, 0, SEEK_SET) == 0)                               //set fp to beginning of file
+    if(fseek(m_boardFile.file, 0, SEEK_SET) == 0)
     {
         while (1)
         {
-            fseek(m_boardFile.file, (count - 1) * MAX_MESSAGE_SIZE, SEEK_SET);
-            char temp = fgetc(m_boardFile.file);                                //Get char and force EOF to trigger
+            fseek(m_boardFile.file, (count - 1) * MAX_MESSAGE_SIZE, SEEK_CUR);
 
-            if (feof(m_boardFile.file) != 0)
-            {
+            if (m_boardFile.file == EOF)
                 return count;
-            }
             else
-            {
-                ++count;
-                ungetc(temp, m_boardFile.file);                                //Since we didn't find EOF, put char back
-            }
+                count++;
         }
     }
     else
@@ -107,6 +101,8 @@ int UpdateFile()
         }
 }
 
+
+
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: WriteFile
 
@@ -115,55 +111,56 @@ int UpdateFile()
     @return     -- On failure, lastError is set and 0 returned. On success, returns 1
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+//Writes to file
+//Return 1 on success, 0 on failure
 int WriteFile()
 {
-    char messageHeader[MAX_MESSAGE_SIZE];           //For holding message header
-    char userMessage[MAX_MESSAGE_SIZE];             //Buffer to hold user message temporarily to avoid overflow
-    char messagePad[MAX_MESSAGE_SIZE];              //For padding messageToWrite to MAX_MESSAGE_SIZE
+    //=========================================================================================//
     char messageToWrite[MAX_MESSAGE_SIZE];          //Message to be written to BB
-    int sizeMessageHeader = 0;                     //Size of message
-    int sizeUserMessage = 0;                     //Size of message
-    int sizeMessagePad = 0;                     //Size of message
-    int sizeMessageMinusPad = 0;
+    char tempBuffer[MAX_MESSAGE_SIZE];              //Buffer to hold message temporarily to avoid overflow
+    int messageSize = 0;                            //Size of message
+    memset(messageToWrite, 0, MAX_MESSAGE_SIZE);
+    memset(tempBuffer,0,MAX_MESSAGE_SIZE);
+    //=========================================================================================//
 
-    printf("Enter the message to write to the board\n");            //Prompt user for message
-    fflush(stdout);
-    fgets(userMessage, MAX_MESSAGE_SIZE, stdin);                    //Get user message
 
-    sprintf(messageHeader, "<message n = %d>\n", m_boardFile.nextMessageNumber); //Create message header
-    sizeMessageHeader = (int)strlen(messageHeader);
-    sizeUserMessage = (int)strlen(userMessage);
-    sizeMessageMinusPad = sizeMessageHeader + sizeUserMessage + lengthendXML;  //Set sizeMessageToWrite to sum of lengths of header, userMessage, and footer
+    sprintf(messageToWrite, "<message n = %d>", ++m_boardFile.messageCount);
+    messageSize += strlen(messageToWrite) + strlen(endXml);
+    fgets(tempBuffer, MAX_MESSAGE_SIZE, stdin);             //Get user message here
+    messageSize += strlen(tempBuffer);
 
-    if(sizeMessageMinusPad > MAX_MESSAGE_SIZE)                       //Check for message buffer overflow
+    if(messageSize > MAX_MESSAGE_SIZE-2)                      //If user message + XML tags cause overflow
     {
         m_boardFile.lastError = WriteMessageBufferOverflow;
         return 0;
     }
-
-    sizeMessagePad = MAX_MESSAGE_SIZE - sizeMessageMinusPad - 1; //Pad the end of message with spaces, save one for '\0'
-    sprintf(messagePad, "%*s\n", sizeMessagePad, "");   //length minus 4 to account for three newlines and \0 //TODO what???
-
-    sprintf(messageToWrite, "<message n = %d>", m_boardFile.nextMessageNumber); //Add message header to messageToWrite
-    strcat(messageToWrite, messagePad);                         //Add padding to messageToWrite
-    strcat(messageToWrite, userMessage);                        //Add user message to messageToWrite
-    strcat(messageToWrite, endXml);                             //And message footer to messageToWrite
-
-    OpenFile(m_boardFile.fileName);         //OPEN
-    m_boardFile.nextMessageNumber = UpdateFile();                   //Get number of next message
-
-    fseek(m_boardFile.file, 0, SEEK_END);                       //Update file pointer
-
-    if( fprintf(m_boardFile.file, "%s", messageToWrite) < 0 || m_boardFile.nextMessageNumber < 0 )
+    else
     {
-        m_boardFile.lastError = WriteFailed;
-        return 0;
+
+        int messagePaddingLength = MAX_MESSAGE_SIZE - messageSize;  //Pad the end of message with spaces
+        char messagePad[MAX_MESSAGE_SIZE];
+        memset(messagePad, 0, MAX_MESSAGE_SIZE);
+        sprintf(messagePad, "%*s\n", messagePaddingLength-2, ""); //length minus 2 to account for \n and \0
+
+        strcat(messageToWrite, messagePad);                     //Concat message to write with padding
+        strcat(messageToWrite, tempBuffer);                     //Message to write
+        strcat(messageToWrite, endXml);                         //And closing XML tag
+        messageToWrite[MAX_MESSAGE_SIZE-1] = '\0';              //Set end of message to null terminating
+        fseek(m_boardFile.file, 0, SEEK_END);
+
+        m_boardFile.messageCount = UpdateFile();
+        if( fprintf(m_boardFile.file, "%s\n", messageToWrite) < 0 || m_boardFile.messageCount == 0 )
+        {
+            m_boardFile.lastError = WriteFailed;
+            return 0;
+        }
+        else
+        {
+            return 1;
+        }
     }
-
-    fclose(m_boardFile.file); //CLOSE
-
-    return 1;
 }
+
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: ReadFileBySequenceNumber
@@ -175,55 +172,45 @@ int WriteFile()
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int ReadFileBySequenceNumber(int sequenceNumber)
 {
-    char messageToPrint[MAX_MESSAGE_SIZE];
-    char beginXml[MAX_MESSAGE_SIZE];
-    char messageToParse[MAX_MESSAGE_SIZE];
-    int seekLength = (sequenceNumber - 1) * (MAX_MESSAGE_SIZE - 1);
-    //Sequences 1 starts at line 0, message has '\0'
-
-    OpenFile(m_boardFile.fileName);
-
-    m_boardFile.nextMessageNumber = UpdateFile();                            //Update next message number
-
-    if(sequenceNumber < m_boardFile.nextMessageNumber && sequenceNumber > 0) //Check sequence number exists and > 0
+    m_boardFile.messageCount = UpdateFile();
+    if(sequenceNumber <= m_boardFile.messageCount  //Check sequence number exists
+            && sequenceNumber > 0)                    //And sequence number greater than 0
     {
-        if(fseek(m_boardFile.file, seekLength, SEEK_SET) == 0)
+        if(fseek(m_boardFile.file, ( (sequenceNumber-1) /*Sequences start at line 0*/ * MAX_MESSAGE_SIZE), SEEK_SET) == 0)
         {
+            char messageToPrint[MAX_MESSAGE_SIZE],
+                 beginXml[MAX_MESSAGE_SIZE],
+                 messageToParse[MAX_MESSAGE_SIZE];
             fread(messageToParse, sizeof(char), MAX_MESSAGE_SIZE, m_boardFile.file); //Get string of data to parse
-
             sprintf(beginXml, "<message n = %d>",  sequenceNumber);
             int xmlResult = XMLParser(beginXml, endXml, messageToParse, messageToPrint, MAX_MESSAGE_SIZE);
-
-            if(xmlResult == 0)                                              //If invalid message in file
+            if(xmlResult == 0)           //If invalid message in file
             {
                 m_boardFile.lastError = InvalidXMLSyntax;
-                fclose(m_boardFile.file);
                 return 0;
             }
             else if(xmlResult == -1)    //If message too large
             {
                 m_boardFile.lastError = ReadMessageBufferOverflow;
-                fclose(m_boardFile.file);
                 return 0;
             }
-            printf("Message: %s", messageToPrint);
-            fclose(m_boardFile.file);
+            printf("Message:\n%s", messageToPrint);
             return 1;
         }
-        else                                                               //If seek fails...
+        else //If seek fails...
         {
             m_boardFile.lastError = SeekFailed;
-            fclose(m_boardFile.file);
             return 0;
         }
     }
-    else                                                           //Invalid user input or sequence number doesn't exist
+    else //Invalid user input or sequence number doesn't exist
     {
         m_boardFile.lastError = ReadFailed;
-        fclose(m_boardFile.file);
         return 0;
     }
 }
+
+
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: PrintSequenceNumbers
@@ -235,44 +222,45 @@ int ReadFileBySequenceNumber(int sequenceNumber)
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int PrintSequenceNumbers()
 {
-    OpenFile(m_boardFile.fileName); //OPEN
-    m_boardFile.nextMessageNumber = UpdateFile();
-    if(m_boardFile.nextMessageNumber == 0)
+
+    m_boardFile.messageCount = UpdateFile();
+    if(m_boardFile.messageCount == 0)
     {
         m_boardFile.lastError = PrintSequenceFailed;
-        fclose(m_boardFile.file);
         return 0;
     }
 
+
     int i;
     printf("Sequence Numbers Available:\n");
-    for(i = 0; i < m_boardFile.nextMessageNumber-1; ++i)
+    for(i = 0; i < m_boardFile.messageCount; i++)
     {
-        printf("%d\n", i+1 );
+        printf("%d\n",i+1 );
     }
     fflush(stdout);
-    fclose(m_boardFile.file); //CLOSE
     return 1;
 }
+
+
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: OpenFile
 
-    Opens the bulletin board file for read and write operations
+    Opens the bulletin board file
 
-    @return exits on failure
+    @return 0 on failure, 1 on success
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-FILE * OpenFile(const char * fileName)
+//Opens file for R/W operations
+//Returns 1 on success, 0 on failure
+int OpenFile(const char* fileName)
 {
-    FILE * fp = fopen(fileName, "a+");
-    if(NULL == fp)
-    {
-        printf("Failed to open file %s. Exiting...", fileName);
-        exit(1);
-    }
-    return fp;
+    m_boardFile.file = fopen(fileName, "a+");
+    if(NULL == m_boardFile.file) return 0;
+    return 1;
 }
+
+
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: PrintMenu
@@ -282,11 +270,14 @@ FILE * OpenFile(const char * fileName)
     @return     --  Returns 0 when user requests exit, else 1
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+//Prints the BB Menu
+//Returns 0 when user requests exit
+//otherwise returns 1
 int PrintMenu()
 {
     m_boardFile.lastError = NoError; //Reset error
-    printf( "\n"
-            "=====================================================================\n"
+    printf(  "\n"
+             "=====================================================================\n"
              "|                      Bulletin Board Options                       |\n"
              "=====================================================================\n"
              "1. write  :  Appends a new message to the end of the message board\n"
@@ -299,7 +290,7 @@ int PrintMenu()
              "   Option : ");
     fflush(stdout);
     int optionResult = GetOption();
-    if(ERROR == optionResult)           //If something failed
+    if(0 == optionResult)           //If something failed
     {
         PrintErrorMessage();        //Print error
     }
@@ -314,6 +305,8 @@ int PrintMenu()
     return 1;
 }
 
+
+
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: GetOption
 
@@ -322,6 +315,8 @@ int PrintMenu()
     @return     --      EXIT if user selects exit, 0 on error
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+//Returns 0 on error
+//Returns EXIT if option 4 is selected
 int GetOption() {
     int userOption = 0, readOption = 0;
 
@@ -346,26 +341,29 @@ int GetOption() {
     return 0;
 }
 
+
+
+
+
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: InitBBFile
 
     Initializes the m_boardFile struct and sets the number of messages
     already present in the file we're writing to
+
+    @return     --  Number of messages in file or 0 if failure
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-void InitBBFile(const char *filename)
+int InitBBFile()
 {
-    m_boardFile.fileName = filename;
     m_boardFile.lastError = NoError;
-    m_boardFile.file = OpenFile(filename);
-    m_boardFile.nextMessageNumber = UpdateFile();
-    if(m_boardFile.nextMessageNumber == 0)
-    {
-        printf("Failed to initialize BB file. Exiting...\n");
-        exit(1);
-    }
-    fclose(m_boardFile.file);
+    m_boardFile.messageCount = UpdateFile();
+    return m_boardFile.messageCount;
 }
+
+
+
+
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: PrintErrorMessage
@@ -412,7 +410,13 @@ void PrintErrorMessage()
         default:
             break;
     }
+
+
 }
+
+
+
+
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: XMLParser
@@ -427,7 +431,11 @@ void PrintErrorMessage()
     @return                --      1 on success, 0 on failure, -1 if token is too large to fit
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-int XMLParser( const char* beginXml, const char* endXml, char* clientMessage, char* token, int tokenSize)
+int XMLParser(  const char* beginXml,
+        const char* endXml,
+        char* clientMessage,
+        char* token,
+        int tokenSize)
 {
     //~~~~~~~~~~~~~Local vars ~~~~~~~~~~~~~~~~~~~~~~~//
     int clientMessageLength = strlen(clientMessage);
@@ -446,7 +454,7 @@ int XMLParser( const char* beginXml, const char* endXml, char* clientMessage, ch
     if(strcmp(tempString, beginXml) == 0 ) //If beginXml is found
     {
         memcpy(tempString, clientMessage, clientMessageLength); //Copy entire clientMessage
-        for(i = 1; i < clientMessageLength; ++i) //Check for valid delimiter here
+        for(i = 1; i < clientMessageLength; i++) //Check for valid delimiter here
         {
             if(tempString[i] == '<')
             {
@@ -460,8 +468,7 @@ int XMLParser( const char* beginXml, const char* endXml, char* clientMessage, ch
             delimiter[endXmlLength] = '\0';//Set end of delimiter to null
             if (strcmp(delimiter, endXml) != 0) //If invalid delimiter
                 returnVal = 0;
-            else
-            {
+            else {
                 returnVal = 1;//Set valid return
                 char *tempToken = clientMessage + beginXmlLength; //Set temporary token to end of starting delimiter
                 strtok(tempToken, "<");
@@ -473,6 +480,7 @@ int XMLParser( const char* beginXml, const char* endXml, char* clientMessage, ch
     }
     return returnVal;
 }
+
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: EatInputUntilNewLine
@@ -486,7 +494,7 @@ int EatInputUntilNewline()
     int charCount = 0;
     while(getchar() != '\n')//Consume newline
     {
-        ++charCount;
+        charCount++;
     }
     return charCount;
 }
