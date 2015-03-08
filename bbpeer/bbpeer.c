@@ -67,12 +67,12 @@ int main(int argc, const char* argv[])
 
 void MenuRunner(void * pInfo)
 {
-    puts("I'm in menu runner!!!");
     SendingInfo* info = (SendingInfo *)pInfo;
 
-    while (!info->machineHasExited)
+    int loop = 1;
+    while (loop)
     {
-       info->machineHasExited = PrintMenu();
+        loop = PrintMenu();
     }
 }
 
@@ -98,7 +98,9 @@ void InitNetworkThread(void* pInfo)
     pthread_create(&mainThread, NULL, (void*)&MenuRunner, (void*)&(info)); //shouldn't come up until token passing begins
 }
 
-void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]) {
+void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[])
+{
+    puts("Acquire: about to send");
     int length;
     sendto(
             neighborSocket,                //Client socket
@@ -108,7 +110,7 @@ void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t
             (struct sockaddr*)&info->neighborInfo,    //Destination
             (*sockAddrLength)                 //Length of clientAddress
     );
-
+    puts("Acquire: about to receive");
 
     length = recvfrom(
             mySocket,                     //Server socket
@@ -118,6 +120,9 @@ void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t
             (struct sockaddr*)&info->exitingMachineInfo,  //Source address
             sockAddrLength             //Size of source address
     );
+
+    puts("Acquire: receive complete");
+
 }
 
 void OpenSocket(int port, int* mySocket, struct sockaddr_in* sockAddrnInfo)
