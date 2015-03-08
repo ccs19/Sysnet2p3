@@ -59,11 +59,15 @@ int main(int argc, const char* argv[])
     receiveServerResponse(serverSocketFD, info, sizeof(SendingInfo)); //closes socket when received
     pthread_create(&networkThread, NULL, (void *)InitNetworkThread, (void*)(info));
     //establish ring TODO
-    //join threads TODO
     while(!exitFlag);
+    pthread_join(mainThread, NULL);
+    pthread_join(networkThread, NULL);
     return 0;
 }
 
+/*
+ * Runs the menu endlessly until the peer exits.
+ */
 void MenuRunner()
 {
     int loop = 1;
@@ -71,7 +75,6 @@ void MenuRunner()
     {
         loop = PrintMenu();
     }
-    puts("end while loop");
     exitFlag = 1;
 }
 
