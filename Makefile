@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -g -Wall
-SERVEROBJECTS = ./bbserver/bbserver.c
-CLIENTOBJECTS = ./bbpeer/bbwriter.c ./bbpeer/bbpeer.c
+SERVEROBJECTS = ./bbserver/bbserver.c common.c
+CLIENTOBJECTS = ./bbpeer/bbwriter.c ./bbpeer/bbpeer.c common.c
 SERVERNAME = ./bbserver/bbserver
 CLIENTNAME = ./bbpeer/bbpeer
 TODELETE = $(SERVERNAME) $(CLIENTNAME) *.o

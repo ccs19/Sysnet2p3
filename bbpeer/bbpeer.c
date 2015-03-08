@@ -309,29 +309,6 @@ void receiveServerResponseAndClose(int socketFD, SendingInfo *response, int size
 }
 
 /*
- * Displays contents of a SendingInfo struct.
- *
- * sendingInfo - the sending info
- *
- */
-void PrintSendingInfo(SendingInfo *sendingInfo)
-{
-    printf("Neighbor info: ");
-    PrintSockaddr_in(&sendingInfo->neighborInfo);
-    printf("Has token: %d\n", sendingInfo->hasToken);
-    printf("Machine has exited: %d\n", sendingInfo->machineHasExited);
-    printf("Exiting Machine Info ");
-    PrintSockaddr_in(&sendingInfo->exitingMachineInfo);
-    printf("Exiting Machine Display Info: ");
-    PrintSockaddr_in(&sendingInfo->exitingMachineNeighborInfo);
-}
-
-void PrintSockaddr_in(struct sockaddr_in *addr)
-{
-    printf("IP: %s Port: %d\n", inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
-}
-
-/*
  * Prints the response to the screen in a formatted way.
  *
  * response - the server's response as an XML formatted string
