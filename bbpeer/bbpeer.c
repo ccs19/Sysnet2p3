@@ -29,7 +29,8 @@ int loopMenu = 1;
     @param argv         --  arg vector
  */
 void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
-void ServerSetup(int numArgs, const char * programName, const char * nameOfServer, const char * portString, SendingInfo * info);
+void ServerSetup(int numArgs, const char *programName, const char *nameOfServer, const char *portString, SendingInfo *info);
+void ChooseTokenHolder();
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int main(int argc, const char* argv[])
@@ -40,7 +41,8 @@ int main(int argc, const char* argv[])
     ServerSetup(argc, argv[0], argv[2], argv[3], info);
 
     pthread_create(&networkThread, NULL, (void *)InitNetworkThread, (void*)(info));
-    //establish ring TODO
+
+    ChooseTokenHolder();
 
     while(loopMenu);                        //prevent joining of threads until it's time
     pthread_join(mainThread, NULL);         //join threads
@@ -49,9 +51,17 @@ int main(int argc, const char* argv[])
 }
 
 /*
+ * Chooses token holder.
+ */
+void ChooseTokenHolder()
+{
+
+}
+
+/*
  * Performs communication with server.
  */
-void ServerSetup(int numArgs, const char * programName, const char * nameOfServer, const char * portString, SendingInfo * info)
+void ServerSetup(int numArgs, const char *programName, const char *nameOfServer, const char *portString, SendingInfo *info)
 {
     if(numArgs != 4)
     {
@@ -89,6 +99,9 @@ void MenuRunner()
     loopMenu = 0;
 }
 
+/*
+ * Initializes network thread.
+ */
 void InitNetworkThread(void* pInfo)
 {
     SendingInfo* info = (SendingInfo*)pInfo;
@@ -111,6 +124,9 @@ void InitNetworkThread(void* pInfo)
     pthread_create(&mainThread, NULL, (void*)&MenuRunner, (void*)&(info)); //shouldn't come up until token passing begins
 }
 
+/*
+ * Acquire token, do stuff, send on.
+ */
 void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[])
 {
     int length;
@@ -127,6 +143,7 @@ void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t
 
     puts("Acquire: about to send");
     //do stuff now that I have the token TODO
+    //think about having a queue of commands that gets run when this happens
 
     sendto(
             neighborSocket,                //Client socket
@@ -140,6 +157,9 @@ void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t
     puts("Acquire: send complete");
 }
 
+/*
+ * Open socket and bind.
+ */
 void OpenSocket(int port, int* mySocket, struct sockaddr_in* sockAddrnInfo)
 {
     char hostname[256];
