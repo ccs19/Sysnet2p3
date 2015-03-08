@@ -169,12 +169,11 @@ void AcceptConnections()
 {
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     int i = 0;
-    printf("Waiting for %d connections... \n", numberOfHosts - i);
     while(i < numberOfHosts)
     {
+        printf("Waiting for %d connections... \n", numberOfHosts - i);
         HandleClientRequests(&peerInfo[i]);
         ++i;
-        printf("Waiting for %d connections... \n", numberOfHosts - i);
     }
     
     for(i = 0; i < numberOfHosts; i++)
