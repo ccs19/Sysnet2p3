@@ -1,7 +1,3 @@
-#ifndef _BB_PEER_H
-#define _BB_PEER_H
-
-
 /*
  * bbpeer.h
  * Systems and Networks II
@@ -10,19 +6,11 @@
  * This file describes the functions to be implemented by the UDPclient.
  * You may also implement any helper functions you deem necessary to complete the program.
  */
+
+#ifndef _BB_PEER_H
+#define _BB_PEER_H
  
  #include "../common.h"
-
-
-
-typedef struct
-{
-    struct sockaddr_in localPeerInfo;
-    char* neighborAddress;
-}NetworkThreadInfo;
-
-
-
 
 /*
  * Creates a datagram socket and connects to a server.

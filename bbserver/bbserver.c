@@ -6,6 +6,7 @@
  */
 
 #include "bbserver.h"
+#include "../common.h"
 
 #define MIN_HOSTS 1
 #define MAX_HOSTS 10
@@ -115,8 +116,6 @@ void BindSocket()
     if( ( bind( ServerSocket, (struct sockaddr *) &ServerAddress, sizeof(ServerAddress)) )  < 0)
         ExitOnError("Failed to bind socket"); //If binding of socket fails
 }
-
-
 
 /*
  * Receives the server's response formatted as an XML text string.
@@ -252,7 +251,8 @@ void DisplayPeerInfo()
     int i = 0;
     for(i = 0; i < numberOfHosts; i++)
     {
-        printf("Peer #%d IP: %s Port: %d\n", i, inet_ntoa(peerInfo[i].sin_addr), ntohs(peerInfo[i].sin_port));
+        printf("Peer #%d", i);
+        PrintSockaddr_in(&peerInfo[i]);
     }
 }
 
