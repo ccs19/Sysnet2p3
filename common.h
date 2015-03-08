@@ -8,7 +8,6 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
-
 #include <netinet/in.h>
 #include <string.h>
 #include <stdio.h>
@@ -42,6 +41,5 @@ void PrintSockaddr_in(struct sockaddr_in *addr);
  *
  */
 void PrintSendingInfo(SendingInfo *sendingInfo);
-
 
 #endif
