@@ -65,10 +65,8 @@ int main(int argc, const char* argv[])
     return 0;
 }
 
-void MenuRunner(void * pInfo)
+void MenuRunner()
 {
-    SendingInfo* info = (SendingInfo *)pInfo;
-
     int loop = 1;
     while (loop)
     {

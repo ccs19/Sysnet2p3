@@ -78,6 +78,6 @@ void InitNetworkThread(void*);
 void OpenSocket(int, int*, struct sockaddr_in*);
 void InitAddressStruct(int);
 void BindSocket(int*, struct sockaddr_in*);
-void MenuRunner(void*);
+void MenuRunner();
 
 #endif
