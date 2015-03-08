@@ -29,6 +29,7 @@ int loopMenu = 1;
     @param argv         --  arg vector
  */
 void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
+void serverSetup(const char * nameOfServer, const char * portString, SendingInfo * info);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int main(int argc, const char* argv[])
@@ -41,22 +42,9 @@ int main(int argc, const char* argv[])
 
     InitBBFile(argv[1]);
 
-    int serverSocketFD;
-    struct sockaddr_in serverAddress;
-
     SendingInfo* info = malloc(sizeof(SendingInfo));
-    memset(info, 0, sizeof(SendingInfo));
+    serverSetup(argv[2], argv[3], info);
 
-    int portNum = atoi (argv[3]);     // parse input parameter for port information
-    char serverName[256];
-    strcpy(serverName, argv[2]);       // get server hostname
-
-    serverSocketFD = createSocket(serverName, portNum, &serverAddress);     // create a streaming socket
-
-    printf ("Sending info to server...");
-
-    sendRequest(serverSocketFD, "", &serverAddress);
-    receiveServerResponse(serverSocketFD, info, sizeof(SendingInfo)); //closes socket when received
     pthread_create(&networkThread, NULL, (void *)InitNetworkThread, (void*)(info));
     //establish ring TODO
 
@@ -64,6 +52,25 @@ int main(int argc, const char* argv[])
     pthread_join(mainThread, NULL);         //join threads
     pthread_join(networkThread, NULL);
     return 0;
+}
+
+void serverSetup(const char * nameOfServer, const char * portString, SendingInfo * info)
+{
+    int serverSocketFD, serverPortNum;
+    struct sockaddr_in serverAddress;
+    char serverName[256];
+
+    memset(info, 0, sizeof(SendingInfo));
+
+    serverPortNum = atoi (portString);     // parse input parameter for port information
+    strcpy(serverName, nameOfServer);       // get server hostname
+
+    serverSocketFD = createSocket(serverName, serverPortNum, &serverAddress);     // create a streaming socket
+
+    printf ("Sending info to server...\n");
+
+    sendRequest(serverSocketFD, "", &serverAddress);
+    receiveServerResponse(serverSocketFD, info, sizeof(SendingInfo)); //closes socket when received
 }
 
 /*
