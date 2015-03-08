@@ -3,4 +3,3 @@ project(sysnet2p3)
 
 add_subdirectory(./bbpeer)
 add_subdirectory(./bbserver)
-add_subdirectory(./bbwriter)

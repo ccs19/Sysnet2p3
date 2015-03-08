@@ -14,28 +14,10 @@
 #include <unistd.h>
 #include <string.h> //for memset
 
+#include "bbserver.h"
+
 #define MIN_HOSTS 1
 #define MAX_HOSTS 10
-
-typedef int bool;
-enum{false, true};
-
-typedef struct {
-    struct addr_in ip;
-    int port;
-}PeerInfo;
-
-typedef struct {
-    struct addr_in senderIp;
-    int port;
-    bool haveToken;
-}SendingInfo;
-
-typedef struct{
-    struct addr_in machineExitIP;
-    int machineExitPort;
-    bool machineExit;
-}TokenInfo;
 
 //Globals
 int numberOfHosts = -1;
@@ -43,46 +25,24 @@ int i;
 int ServerSocket = 0;
 struct hostent *HostByName = NULL;
 struct sockaddr_in ServerAddress;
+struct sockaddr_in peerInfo[10];
+
 const int SERVER_PORT = 50000;
 const int HostNameMaxSize = 256;
 const int BUFFERSIZE = 256;
 const char* ServerShutdownMessage = "Server shutting down...";
-SendingInfo sendingInfo;
-
-//function prototypes
-void printNumberOfHosts(int numberOfArgs, const char *inputString);
-void OpenSocket(int port);
-void InitAddressStruct(int port);
-void BindSocket();
-void DisplayInfo();
-void AcceptConnections();
-void ExitOnError(char* errorMessage);
-void HandleClientRequests(struct sockaddr_in* clientAddress);
-void ParseClientMessage(char* clientMessage,  struct sockaddr_in* clientAddress, int clientSocket);
-int XMLParser(  const char* beginXml,
-        const char* endXml,
-        char* clientMessage,
-        char* token,
-        int tokenSize);
-
-void tellHost();
 
 int main(int argc, char** argv)
 {
-    printNumberOfHosts(argc, argv[1]); //get number of desired hosts
-    PeerInfo array[numberOfHosts];
-
     OpenSocket(SERVER_PORT);
-    AcceptConnections();
-
-    for(i = 0; i < numberOfHosts; ++i) //wait for hosts
-    {
-        //for number receive messages and stick in array, in_addr, int port
-    }
+    printNumberOfHosts(argc, argv[1]);  //get number of desired hosts
+    DisplayServerInfo();                //displays info about self
+    AcceptConnections();                //captures all peer info
+    DisplayPeerInfo();                  //displays info about all peers
 
     for(i = 0; i < numberOfHosts; ++i) //tell hosts
     {
-        tellHost();     //struct send - toIP, to port, int hasToken
+        tellHost();     //send - toIP, to port
     }
 
     return 0;
@@ -181,11 +141,7 @@ void BindSocket()
  */
 void tellHost()
 {
-    sendingInfo.haveToken = false;
-//    sendingInfo.port = ;
-//    sendingInfo.senderIp = ;
-
-
+    
     //last: to = 1, token = 1
     //else: to = self + 1, token = 0
 }
@@ -213,7 +169,7 @@ int receiveHostMessage(int socketFD, char * response, int size)
     @return           --    void
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-void DisplayInfo()
+void DisplayServerInfo()
 {
     int i = 0;
     struct in_addr ipAddress;
@@ -239,16 +195,36 @@ void DisplayInfo()
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 void AcceptConnections()
 {
-    /*~~~~~~~~~~~~~~~~~~~~~Local vars~~~~~~~~~~~~~~~~~~~~~*/
-    struct sockaddr_in clientAddress;
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-    DisplayInfo();
-    printf("Waiting for connection... ");
-    fflush(stdout);
-    for(;;)
+    int i = 0;
+    printf("Waiting for %d connections... \n", numberOfHosts - i);
+    while(i < numberOfHosts)
     {
-        HandleClientRequests(&clientAddress);
+        /*~~~~~~~~~~~~~~~~~~~~~Local vars~~~~~~~~~~~~~~~~~~~~~*/
+        HandleClientRequests(&peerInfo[i]);
+        ++i;
+        printf("Waiting for %d connections... \n", numberOfHosts - i);
+    }
+    //Fill in structs with their neighbor info here
+    
+    for(i = 0; i < numberOfHosts; i++)
+    {
+        SendingInfo* pInfo = malloc(sizeof(SendingInfo));
+        pInfo->neighborInfo = peerInfo[(i+1) % numberOfHosts];
+        pInfo->hasToken = 0;
+        pInfo->machineHasExited = 0;
+        memcpy(&(pInfo->exitingMachineInfo), (void*)&(peerInfo[i]), sizeof(struct sockaddr_in)); //Set this to the peer's own info
+        memset(&(pInfo->exitingMachineNeighborInfo), 0, sizeof(struct sockaddr_in));
+        sendto
+        (
+            ServerSocket,                       //Client socket
+            (void*)pInfo,                       //String buffer to send to client
+            sizeof(SendingInfo),                //Length of buffer
+            0,                                  //flags
+            (struct sockaddr*)&peerInfo[i],     //Destination
+            sizeof(peerInfo[i])                 //Length of clientAddress
+        );
+        free(pInfo);
     }
 }
 
@@ -269,13 +245,14 @@ void ExitOnError(char* errorMessage)
 /*  FUNCTION:   HandleClientRequests
     Depending on the string received from the client, we either print that it failed or parse
     the message, then close the socket and free the thread.
-    @param  ClientSocketPtr -- A pointer to the client socket typecasted to a void*
+    @param  ClientSocketPtr -- A pointer to the client socket typecasted to a void *
     @return           -- void
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 void HandleClientRequests(struct sockaddr_in* clientAddress)
 {
     fflush(stdout);
+
     /*~~~~~~~~~~~~~~~~~~~~~Local vars~~~~~~~~~~~~~~~~~~~~~*/
     char stringBuffer[BUFFERSIZE];
     bzero(stringBuffer, BUFFERSIZE);
@@ -283,7 +260,6 @@ void HandleClientRequests(struct sockaddr_in* clientAddress)
     socklen_t bufSize = BUFFERSIZE;
     int length;
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    fflush(stdout);
     length = recvfrom(
             ServerSocket,                     //Server socket
             stringBuffer,                     //Buffer for message
@@ -292,9 +268,35 @@ void HandleClientRequests(struct sockaddr_in* clientAddress)
             (struct sockaddr*)clientAddress,  //Source address
             &clientAddressLength              //Size of source address
     );
-    stringBuffer[length] = '\0';
-    printf("Received message: %s\n", stringBuffer);
-    ParseClientMessage(stringBuffer, clientAddress, length);
+    
+    if(length < 0)
+    {
+        fprintf(stderr, "rcvfrom() failed.\n");
+    }
+
+    char clientAddressString[16];
+    char clientPortString[6];
+
+    sprintf(clientAddressString, "%s", inet_ntoa(clientAddress->sin_addr));
+    sprintf(clientPortString, "%hu", htons(clientAddress->sin_port));
+
+    printf("Client IP: %s\n", clientAddressString);
+    printf("Client port: %s\n", clientPortString);
+    puts("");
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*  FUNCTION:   DisplayPeerInfo
+    Displays info of all peers
+ */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+void DisplayPeerInfo()
+{
+    int i;
+    for(i = 0; i < numberOfHosts; i++)
+    {
+        printf("Peer #%d IP: %s Port: %d\n", i, inet_ntoa(peerInfo[i].sin_addr), ntohs(peerInfo[i].sin_port));
+    }
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -308,125 +310,26 @@ void HandleClientRequests(struct sockaddr_in* clientAddress)
 void ParseClientMessage(char* clientMessage,  struct sockaddr_in* clientAddress, int clientSocket)
 {
     /*~~~~~~~~~~~~~~~~~~~~~Local vars~~~~~~~~~~~~~~~~~~~~~*/
-    int i = 0;
-    char string[BUFFERSIZE]; //String to send back to client
-    char token[BUFFERSIZE];  //Token to use for echo reply
-    string[0] = '\0';
-    const int NUMLOADAVG = 3; //Number of load averages queries
     socklen_t clientAddressLength = sizeof(struct sockaddr_in);
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    /*~~~~~~~~~~~~~~~~~~~~~Load avg response~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    if(strcmp(clientMessage, "<loadavg/>") == 0)
-    {
-        double loadavg[NUMLOADAVG];
-        getloadavg(loadavg, NUMLOADAVG); //Get load average and put in double array
-
-        //Begin string format:
-        strcat(string, "<replyLoadAvg>");
-        for(i = 0; i < NUMLOADAVG; ++i)
-        {
-            char tempAvg[BUFFERSIZE];
-            sprintf(tempAvg, "%lf:", loadavg[i]);
-            strcat(string, tempAvg);              //Append string to string we return to client
-        }
-        strcat(string, "</replyLoadAvg>\0"); //End of string
-    }
-        /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-        /*~~~~~~~~~~~~~~~~~~~~~Echo response~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    else if ((XMLParser("<echo>", "</echo>", clientMessage, token, sizeof(token))) == 1)
-    {
-        //Set return echo string
-        strcat(string, "<reply>");
-        strcat(string, token);
-        strcat(string, "</reply>\0");
-    }
-        /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-        /*~~~~~~~~~~~~~~~~~~~~~Shut down response~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    else if(strcmp(clientMessage, "<shutdown/>") == 0)
-    {
-        strcat(string, ServerShutdownMessage);
-    }
-        /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-    else //Else we have an invalid format
-        strcat(string, "<error>unknown format</error>\0");
-    printf("Sending back %s\n\n", string);
+    //Initialize struct to return to client here
+    size_t sendingInfoLength = sizeof(SendingInfo);
+    SendingInfo sendingInfo;
+    // sendingInfo.someValue = 65781685; //neighbor
+    sendingInfo.hasToken = -1;
+    sendingInfo.machineHasExited = 0;
+    
     if(     (sendto(
-            ServerSocket,                       //Client socket
-            string,                             //String buffer to send to client
-            strlen(string),                     //Length of buffer
+            ServerSocket,                //Client socket
+            (void*)&sendingInfo,           //String buffer to send to client
+            sendingInfoLength,                       //Length of buffer
             0,                                  //flags
             (struct sockaddr*)clientAddress,    //Destination
             clientAddressLength                 //Length of clientAddress
 
     )) < 0) //If sendto fails
+        {
         printf("Failed to send\n");
-    if(strcmp(string, ServerShutdownMessage) == 0) //If server shutdown message received
-    {
-        close(ServerSocket);
-        exit(1);
-    }
-}
-
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-/*  FUNCTION: XMLParser
-    Parses an XML value and returns a token.
-    @param begin           --      The expected beginning of an XML expression
-    @param end             --      The expected ending of an XML expression
-    @param token           --      The token extracted from the expression
-    @param clientMessage   --      Message to parse
-    @param length          --      Size of token
-    @return                --      1 on success, 0 on failure, -1 if token is too large to fit
- */
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-int XMLParser(  const char* beginXml,
-        const char* endXml,
-        char* clientMessage,
-        char* token,
-        int tokenSize)
-{
-    //~~~~~~~~~~~~~Local vars ~~~~~~~~~~~~~~~~~~~~~~~//
-    char tempString[strlen(clientMessage)];
-    char *delimiter = NULL;
-    int returnVal = 0;
-    int i = 0;
-    int foundDelimiter = 0;
-    int beginXmlLength = strlen(beginXml);
-    int endXmlLength = strlen(endXml);
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-
-    token[0] = '\0';
-    memcpy(tempString, clientMessage, beginXmlLength); //Copy first part of clientMessage into temp for comparison.
-    tempString[beginXmlLength] = '\0';
-    if(strcmp(tempString, beginXml) == 0 ) //If beginXml is found
-    {
-        memcpy(tempString, clientMessage, strlen(clientMessage)); //Copy entire clientMessage
-        for(i = 1; i < strlen(clientMessage); ++i) //Check for valid delimiter here
-        {
-            if(tempString[i] == '<')
-            {
-                delimiter = tempString+i;//Potential valid delimiter found. Point delimiter ptr to location.
-                foundDelimiter = 1;
-                break;
-            }
         }
-        if(foundDelimiter)
-        {
-            delimiter[endXmlLength] = '\0';//Set end of delimiter to null
-            if (strcmp(delimiter, endXml) != 0) //If invalid delimiter
-                returnVal = 0;
-            else {
-                returnVal = 1;//Set valid return
-                char *tempToken = clientMessage + (strlen(beginXml)); //Set temporary token to end of starting delimiter
-                strtok(tempToken, "<");
-                if (strlen(tempToken) > tokenSize) returnVal = -1;              //If token is too large, return -1
-                else if (strcmp(tempToken, endXml) == 0) token[0] = '\0';       //Else if empty token found
-                else strcat(token, tempToken);                                  //Else put extracted token in variable
-            }
-        }
-    }
-    return returnVal;
 }

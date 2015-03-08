@@ -5,8 +5,6 @@
  * Christopher Schneider & Brett Rowberry
  */
 
-#include <stdio.h>
-
 typedef enum
 {
     UpdateFailed,
