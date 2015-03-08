@@ -30,7 +30,7 @@ int loopMenu = 1;
  */
 void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
 void ServerSetup(int numArgs, const char *programName, const char *nameOfServer, const char *portString, SendingInfo *info);
-void ChooseTokenHolder();
+void ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int main(int argc, const char* argv[])
@@ -42,8 +42,6 @@ int main(int argc, const char* argv[])
 
     pthread_create(&networkThread, NULL, (void *)InitNetworkThread, (void*)(info));
 
-    ChooseTokenHolder();
-
     while(loopMenu);                        //prevent joining of threads until it's time
     pthread_join(mainThread, NULL);         //join threads
     pthread_join(networkThread, NULL);
@@ -53,9 +51,33 @@ int main(int argc, const char* argv[])
 /*
  * Chooses token holder.
  */
-void ChooseTokenHolder()
+void ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[])
 {
+    int length;
 
+    puts("Choose: about to send");
+
+    sendto(
+            neighborSocket,                //Client socket
+            (void*)stringBuffer,           //String buffer to send to client
+            256,                       //Length of buffer
+            0,                                  //flags
+            (struct sockaddr*)&info->neighborInfo,    //Destination
+            (*sockAddrLength)                 //Length of clientAddress
+    );
+
+    puts("Choose: about to receive");
+
+    length = recvfrom(
+            mySocket,                     //Server socket
+            stringBuffer,                     //Buffer for message
+            256,             //Size of buffer
+            0,                                //Flags
+            (struct sockaddr*)&info->exitingMachineInfo,  //Source address
+            sockAddrLength             //Size of source address
+    );
+
+    printf("String buffer received: %s\n", stringBuffer);
 }
 
 /*
@@ -117,7 +139,8 @@ void InitNetworkThread(void* pInfo)
     neighborSocket = createSocket(inet_ntoa(info->neighborInfo.sin_addr), ntohs(info->neighborInfo.sin_port), &info->neighborInfo);
     sleep(1); //Give time for all peers to open socket
 
-    AcquireToken(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
+//    AcquireToken(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
+    ChooseTokenHolder(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
 
     printf("Message: %s\n", stringBuffer);
     fflush(stdout);
