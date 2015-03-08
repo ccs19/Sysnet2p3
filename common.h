@@ -33,4 +33,15 @@ typedef struct{
     struct sockaddr_in exitingMachineNeighborInfo;
 }SendingInfo;
 
+void PrintSockaddr_in(struct sockaddr_in *addr);
+
+/*
+ * Displays contents of a SendingInfo struct.
+ *
+ * sendingInfo - the sending info
+ *
+ */
+void PrintSendingInfo(SendingInfo *sendingInfo);
+
+
 #endif

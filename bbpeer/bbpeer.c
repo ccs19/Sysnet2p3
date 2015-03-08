@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include "bbpeer.h"
 #include "bbwriter.h"
+#include "../common.h"
 
 pthread_t networkThread; //thread for token passing
 pthread_t mainThread;    //operates the menu
@@ -49,7 +50,7 @@ int main(int argc, const char* argv[])
 }
 
 /*
- * Chooses token holder.
+ * Chooses first token holder.
  */
 void ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[])
 {
@@ -64,7 +65,7 @@ void ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, sock
             256,                                //Length of buffer
             0,                                  //flags
             (struct sockaddr*)&info->neighborInfo,    //Destination
-            (*sockAddrLength)                 //Length of clientAddress
+            (*sockAddrLength)                          //Length of clientAddress
     );
 
     puts("Choose: about to receive");
@@ -82,7 +83,7 @@ void ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, sock
 }
 
 /*
- * Performs communication with server.
+ * Performs communication with server to find out who the neighbor is.
  */
 void ServerSetup(int numArgs, const char *programName, const char *nameOfServer, const char *portString, SendingInfo *info)
 {
@@ -144,6 +145,8 @@ void InitNetworkThread(void* pInfo)
     ChooseTokenHolder(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
 
     printf("Message: %s\n", stringBuffer);
+    PrintSendingInfo(info);
+
     fflush(stdout);
     pthread_create(&mainThread, NULL, (void*)&MenuRunner, (void*)&(info)); //shouldn't come up until token passing begins
 }
@@ -303,6 +306,29 @@ void receiveServerResponseAndClose(int socketFD, SendingInfo *response, int size
         inet_ntoa(response->neighborInfo.sin_addr), 
         ntohs(response->neighborInfo.sin_port));
     closeSocket(socketFD);
+}
+
+/*
+ * Displays contents of a SendingInfo struct.
+ *
+ * sendingInfo - the sending info
+ *
+ */
+void PrintSendingInfo(SendingInfo *sendingInfo)
+{
+    printf("Neighbor info: ");
+    PrintSockaddr_in(&sendingInfo->neighborInfo);
+    printf("Has token: %d\n", sendingInfo->hasToken);
+    printf("Machine has exited: %d\n", sendingInfo->machineHasExited);
+    printf("Exiting Machine Info ");
+    PrintSockaddr_in(&sendingInfo->exitingMachineInfo);
+    printf("Exiting Machine Display Info: ");
+    PrintSockaddr_in(&sendingInfo->exitingMachineNeighborInfo);
+}
+
+void PrintSockaddr_in(struct sockaddr_in *addr)
+{
+    printf("IP: %s Port: %d\n", inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
 }
 
 /*
