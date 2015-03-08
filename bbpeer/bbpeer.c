@@ -56,11 +56,12 @@ void ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, sock
     int length;
 
     puts("Choose: about to send");
+    sprintf(stringBuffer, "%d", mySocket); //TODO send unique ID, like IP_port, do strcmp to find largest
 
     sendto(
-            neighborSocket,                //Client socket
-            (void*)stringBuffer,           //String buffer to send to client
-            256,                       //Length of buffer
+            neighborSocket,                     //Client socket
+            (void*)stringBuffer,                //String buffer to send to client
+            256,                                //Length of buffer
             0,                                  //flags
             (struct sockaddr*)&info->neighborInfo,    //Destination
             (*sockAddrLength)                 //Length of clientAddress
@@ -105,7 +106,7 @@ void ServerSetup(int numArgs, const char *programName, const char *nameOfServer,
     printf ("Sending info to server...\n");
 
     sendRequest(serverSocketFD, "", &serverAddress);
-    receiveServerResponse(serverSocketFD, info, sizeof(SendingInfo)); //closes socket when received
+    receiveServerResponseAndClose(serverSocketFD, info, sizeof(SendingInfo)); //closes socket when received
 }
 
 /*
@@ -132,14 +133,14 @@ void InitNetworkThread(void* pInfo)
     socklen_t sockAddrLength = sizeof(struct sockaddr);
     char stringBuffer[BUFFERSIZE];
     stringBuffer[0] = '\0';
-    strcat(stringBuffer, "Hello!");
+//    strcat(stringBuffer, "Hello!"); //TODO delete
 
     //Init sockets
     OpenSocket(0, &mySocket, &info->exitingMachineInfo);
     neighborSocket = createSocket(inet_ntoa(info->neighborInfo.sin_addr), ntohs(info->neighborInfo.sin_port), &info->neighborInfo);
     sleep(1); //Give time for all peers to open socket
 
-//    AcquireToken(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
+//    AcquireToken(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);  //TODO where to call this?
     ChooseTokenHolder(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
 
     printf("Message: %s\n", stringBuffer);
@@ -288,7 +289,7 @@ void sendRequest(int socketFD, char * request, struct sockaddr_in * dest)
  * response  - the server's response as an XML formatted string to be filled in by this function into the specified string array
  *
  */
-void receiveServerResponse(int socketFD, SendingInfo* response, int size)
+void receiveServerResponseAndClose(int socketFD, SendingInfo *response, int size)
 {
     socklen_t bufSize = sizeof(SendingInfo);
     int length = (int)recvfrom(socketFD, response, bufSize, 0, NULL, NULL);

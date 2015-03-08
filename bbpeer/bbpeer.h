@@ -55,7 +55,7 @@ void sendRequest(int, char*, struct sockaddr_in*);
  * response  - the server's response as an XML formatted string to be filled in by this function into the specified string array
  *
  */
-void receiveServerResponse(int, SendingInfo*, int);
+void receiveServerResponseAndClose(int, SendingInfo *, int);
 
 /*
  * Prints the response to the screen in a formatted way.
