@@ -13,25 +13,15 @@
  
  #include "../common.h"
 
-typedef int bool;
-enum{false, true};
 
-typedef struct {
-    struct addr_in * IP;
-    int port;
-}PeerInfo;
 
-typedef struct {
-    struct addr_in * IP;
-    int port;
-    bool haveToken;
-}ServerInfo;
+typedef struct
+{
+    struct sockaddr_in localPeerInfo;
+    char* neighborAddress;
+}NetworkThreadInfo;
 
-typedef struct{
-    struct addr_in * machineExitIP;
-    int machineExitPort;
-    bool machineExit;
-}TokenInfo;
+
 
 
 /*
@@ -84,7 +74,7 @@ void printResponse(char*);
  */
 int closeSocket(int);
 
-void receiveMessage(void*);
+void InitNetworkThread(void*);
 void OpenSocket(int, int*, struct sockaddr_in*);
 void InitAddressStruct(int);
 void BindSocket(int*, struct sockaddr_in*);

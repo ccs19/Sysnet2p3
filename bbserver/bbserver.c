@@ -26,7 +26,6 @@ int main(int argc, char** argv)
     DisplayServerInfo();                //displays info about self
     AcceptConnections();                //captures all peer info
     DisplayPeerInfo();                  //displays info about all peers
-
     return 0;
 }
 
