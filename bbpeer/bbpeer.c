@@ -17,7 +17,7 @@
 
 pthread_t networkThread; //thread for token passing
 pthread_t mainThread;    //operates the menu
-int exitFlag = 0;
+int loopMenu = 1;
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: main
@@ -59,7 +59,7 @@ int main(int argc, const char* argv[])
     receiveServerResponse(serverSocketFD, info, sizeof(SendingInfo)); //closes socket when received
     pthread_create(&networkThread, NULL, (void *)InitNetworkThread, (void*)(info));
     //establish ring TODO
-    while(!exitFlag);
+    while(loopMenu);
     pthread_join(mainThread, NULL);
     pthread_join(networkThread, NULL);
     return 0;
@@ -75,7 +75,7 @@ void MenuRunner()
     {
         loop = PrintMenu();
     }
-    exitFlag = 1;
+    loopMenu = 0;
 }
 
 void InitNetworkThread(void* pInfo)
