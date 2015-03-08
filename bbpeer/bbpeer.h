@@ -1,3 +1,7 @@
+#ifndef _BB_PEER_H
+#define _BB_PEER_H
+
+
 /*
  * bbpeer.h
  * Systems and Networks II
@@ -7,7 +11,7 @@
  * You may also implement any helper functions you deem necessary to complete the program.
  */
  
- #include "common.h"
+ #include "../common.h"
 
 typedef int bool;
 enum{false, true};
@@ -85,3 +89,5 @@ void OpenSocket(int, int*, struct sockaddr_in*);
 void InitAddressStruct(int);
 void BindSocket(int*, struct sockaddr_in*);
 void MenuRunner(void*);
+
+#endif

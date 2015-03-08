@@ -5,17 +5,8 @@
  * Christopher Schneider & Brett Rowberry
  */
 
-#include <stdio.h> //header files from book
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 #include <errno.h> // for threading
 #include <signal.h>
-#include <unistd.h>
-#include <string.h>
 #include <sys/wait.h>
 
 #include <pthread.h>
@@ -24,12 +15,11 @@
 
 #include "bbpeer.h"
 #include "bbwriter.h"
-#include "../common.h"
 
 ServerInfo serverInfo;
 
 //Constants
-// const int MAX_MESSAGE_SIZE = 256;
+// const int BUFFERSIZE = 256;
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: main

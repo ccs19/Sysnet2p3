@@ -5,6 +5,9 @@
  * Christopher Schneider & Brett Rowberry
  */
 
+#include "../common.h"
+
+
 typedef enum
 {
     UpdateFailed,
@@ -23,8 +26,6 @@ typedef struct{
     FILE* file;
     const char * fileName;
     int nextMessageNumber;          //Current message counter.
-                                    //Idea! Send message counter across hosts to check for
-                                    //file changes
     ErrorCode lastError;            //If an error is encountered, this is set
 }BBFile;
 

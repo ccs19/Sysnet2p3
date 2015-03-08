@@ -4,18 +4,8 @@
  * Project 3
  * Christopher Schneider & Brett Rowberry
  */
-
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-
-#include <errno.h>
-#include <pthread.h>
-#include <semaphore.h>
-#include <sys/types.h>
-#include <unistd.h>
-
 #include "bbwriter.h"
+
 
 //Globals
 BBFile m_boardFile;
@@ -29,8 +19,6 @@ BBFile m_boardFile;
 #define INVALID '5'
 
 //Constants
-const int MAX_MESSAGE_SIZE = 256;
- const int BUFFERSIZE = 256;
  const char * endXml = "</message>\n";
  const int lengthendXML = 11;
  const int READ_STRING_LENGTH = 4;          //Length of read string
@@ -54,7 +42,7 @@ int UpdateFile()
     {
         while (1)
         {
-            fseek(m_boardFile.file, (count - 1) * MAX_MESSAGE_SIZE, SEEK_SET);
+            fseek(m_boardFile.file, (count - 1) * BUFFERSIZE, SEEK_SET);
             char temp = fgetc(m_boardFile.file);                                //Get char and force EOF to trigger
 
             if (feof(m_boardFile.file) != 0)
@@ -85,10 +73,10 @@ int UpdateFile()
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int WriteFile()
 {
-    char messageHeader[MAX_MESSAGE_SIZE];           //For holding message header
-    char userMessage[MAX_MESSAGE_SIZE];             //Buffer to hold user message temporarily to avoid overflow
-    char messagePad[MAX_MESSAGE_SIZE];              //For padding messageToWrite to MAX_MESSAGE_SIZE
-    char messageToWrite[MAX_MESSAGE_SIZE];          //Message to be written to BB
+    char messageHeader[BUFFERSIZE];           //For holding message header
+    char userMessage[BUFFERSIZE];             //Buffer to hold user message temporarily to avoid overflow
+    char messagePad[BUFFERSIZE];              //For padding messageToWrite to BUFFERSIZE
+    char messageToWrite[BUFFERSIZE];          //Message to be written to BB
     int sizeMessageHeader = 0;                     //Size of message
     int sizeUserMessage = 0;                     //Size of message
     int sizeMessagePad = 0;                     //Size of message
@@ -96,20 +84,20 @@ int WriteFile()
 
     printf("Enter the message to write to the board\n");            //Prompt user for message
     fflush(stdout);
-    fgets(userMessage, MAX_MESSAGE_SIZE, stdin);                    //Get user message
+    fgets(userMessage, BUFFERSIZE, stdin);                    //Get user message
 
     sprintf(messageHeader, "<message n = %d>\n", m_boardFile.nextMessageNumber); //Create message header
     sizeMessageHeader = (int)strlen(messageHeader);
     sizeUserMessage = (int)strlen(userMessage);
     sizeMessageMinusPad = sizeMessageHeader + sizeUserMessage + lengthendXML;  //Set sizeMessageToWrite to sum of lengths of header, userMessage, and footer
 
-    if(sizeMessageMinusPad > MAX_MESSAGE_SIZE)                       //Check for message buffer overflow
+    if(sizeMessageMinusPad > BUFFERSIZE)                       //Check for message buffer overflow
     {
         m_boardFile.lastError = WriteMessageBufferOverflow;
         return 0;
     }
 
-    sizeMessagePad = MAX_MESSAGE_SIZE - sizeMessageMinusPad - 1; //Pad the end of message with spaces, save one for '\0'
+    sizeMessagePad = BUFFERSIZE - sizeMessageMinusPad - 1; //Pad the end of message with spaces, save one for '\0'
     sprintf(messagePad, "%*s\n", sizeMessagePad, "");   //length minus 4 to account for three newlines and \0 //TODO what???
 
     sprintf(messageToWrite, "<message n = %d>", m_boardFile.nextMessageNumber); //Add message header to messageToWrite
@@ -145,10 +133,10 @@ int WriteFile()
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int ReadFileBySequenceNumber(int sequenceNumber)
 {
-    char messageToPrint[MAX_MESSAGE_SIZE];
-    char beginXml[MAX_MESSAGE_SIZE];
-    char messageToParse[MAX_MESSAGE_SIZE];
-    int seekLength = (sequenceNumber - 1) * (MAX_MESSAGE_SIZE - 1); //Sequences 1 starts at line 0, message has '\0'
+    char messageToPrint[BUFFERSIZE];
+    char beginXml[BUFFERSIZE];
+    char messageToParse[BUFFERSIZE];
+    int seekLength = (sequenceNumber - 1) * (BUFFERSIZE - 1); //Sequences 1 starts at line 0, message has '\0'
 
     OpenFile(m_boardFile.fileName);
 
@@ -159,11 +147,11 @@ int ReadFileBySequenceNumber(int sequenceNumber)
     {
         if(fseek(m_boardFile.file, seekLength, SEEK_SET) == 0)
         {
-            fread(messageToParse, sizeof(char), MAX_MESSAGE_SIZE, m_boardFile.file); //Get string of data to parse
+            fread(messageToParse, sizeof(char), BUFFERSIZE, m_boardFile.file); //Get string of data to parse
 
             sprintf(beginXml, "<message n = %d>",  sequenceNumber);
 
-            int xmlResult = XMLParser(beginXml, endXml, messageToParse, messageToPrint, MAX_MESSAGE_SIZE);
+            int xmlResult = XMLParser(beginXml, endXml, messageToParse, messageToPrint, BUFFERSIZE);
 
             printf("NEXT MESSAGE NUMBER = %d\n", m_boardFile.nextMessageNumber);
             printf("SEQUENCE NUMBER = %d\n", sequenceNumber);
@@ -383,10 +371,10 @@ void PrintErrorMessage()
             printf("Invalid syntax for selected sequence number\n");
             break;
         case ReadMessageBufferOverflow:
-            printf("Read message buffer overflow. Message read exceeds max size of %d\n", MAX_MESSAGE_SIZE);
+            printf("Read message buffer overflow. Message read exceeds max size of %d\n", BUFFERSIZE);
             break;
         case WriteMessageBufferOverflow:
-            printf("Write message buffer overflow. Message write request exceeds max size of %d\n", MAX_MESSAGE_SIZE);
+            printf("Write message buffer overflow. Message write request exceeds max size of %d\n", BUFFERSIZE);
             break;
         case NoError:
             break;
@@ -483,9 +471,9 @@ int EatInputUntilNewline()
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int ParseUserOption(int* userOption)
 {
-    char userOptionString[MAX_MESSAGE_SIZE];
-    memset(userOptionString, 0, MAX_MESSAGE_SIZE);
-    fgets(userOptionString, MAX_MESSAGE_SIZE, stdin);   //Get string of data to parse
+    char userOptionString[BUFFERSIZE];
+    memset(userOptionString, 0, BUFFERSIZE);
+    fgets(userOptionString, BUFFERSIZE, stdin);   //Get string of data to parse
     userOptionString[strlen(userOptionString)-1] = '\0';  //And null terminate string
 
     if(strcmp(userOptionString, "write") == 0)
@@ -502,7 +490,7 @@ int ParseUserOption(int* userOption)
     }
     else //Else find out if we're reading.
     {
-        char readOption[MAX_MESSAGE_SIZE];
+        char readOption[BUFFERSIZE];
         strcpy(readOption, userOptionString);
         readOption[READ_STRING_LENGTH] = '\0';   //Set strlen to 4 for "read"
         if(strcmp(readOption, "read") != 0 || userOptionString[READ_SPACE] != ' ')  //If not read OR if no space is present in the option, e.g. read6

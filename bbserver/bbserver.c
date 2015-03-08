@@ -5,16 +5,7 @@
  * Christopher Schneider & Brett Rowberry
  */
 
-#include <netinet/in.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <netdb.h> //For gethostbyname()
-#include <arpa/inet.h>
-#include <unistd.h>
-
 #include "bbserver.h"
-#include "../common.h"
 
 #define MIN_HOSTS 1
 #define MAX_HOSTS 10
@@ -27,7 +18,6 @@ struct sockaddr_in ServerAddress;
 struct sockaddr_in peerInfo[MAX_HOSTS];
 
 const int HostNameMaxSize = 256;
-const int BUFFERSIZE = 256;
 
 int main(int argc, char** argv)
 {

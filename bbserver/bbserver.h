@@ -4,6 +4,7 @@
 
 
 
+#include "../common.h"
 
 //function prototypes
 void printNumberOfHosts(int numberOfArgs, const char *inputString);
