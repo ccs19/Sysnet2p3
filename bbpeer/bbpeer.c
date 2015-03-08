@@ -29,7 +29,7 @@ int loopMenu = 1;
     @param argv         --  arg vector
  */
 void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
-void serverSetup(int numArgs, const char * programName, const char * nameOfServer, const char * portString, SendingInfo * info);
+void ServerSetup(int numArgs, const char * programName, const char * nameOfServer, const char * portString, SendingInfo * info);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int main(int argc, const char* argv[])
@@ -37,7 +37,7 @@ int main(int argc, const char* argv[])
     InitBBFile(argv[1]);
 
     SendingInfo* info = malloc(sizeof(SendingInfo));
-    serverSetup(argc, argv[0], argv[2], argv[3], info);
+    ServerSetup(argc, argv[0], argv[2], argv[3], info);
 
     pthread_create(&networkThread, NULL, (void *)InitNetworkThread, (void*)(info));
     //establish ring TODO
@@ -51,7 +51,7 @@ int main(int argc, const char* argv[])
 /*
  * Performs communication with server.
  */
-void serverSetup(int numArgs, const char * programName, const char * nameOfServer, const char * portString, SendingInfo * info)
+void ServerSetup(int numArgs, const char * programName, const char * nameOfServer, const char * portString, SendingInfo * info)
 {
     if(numArgs != 4)
     {
@@ -163,6 +163,9 @@ void OpenSocket(int port, int* mySocket, struct sockaddr_in* sockAddrnInfo)
     ServerAddress.sin_port = htons(port);
 }*/
 
+/*
+ * Binds a socket.
+ */
 void BindSocket(int* mySocket, struct sockaddr_in* sockAddrnInfo)
 {
     
