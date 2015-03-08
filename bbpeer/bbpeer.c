@@ -59,8 +59,9 @@ int main(int argc, const char* argv[])
     receiveServerResponse(serverSocketFD, info, sizeof(SendingInfo)); //closes socket when received
     pthread_create(&networkThread, NULL, (void *)InitNetworkThread, (void*)(info));
     //establish ring TODO
-    while(loopMenu);
-    pthread_join(mainThread, NULL);
+
+    while(loopMenu);                        //prevent joining of threads until it's time
+    pthread_join(mainThread, NULL);         //join threads
     pthread_join(networkThread, NULL);
     return 0;
 }
@@ -102,16 +103,7 @@ void InitNetworkThread(void* pInfo)
 
 void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[])
 {
-    puts("Acquire: about to send");
     int length;
-    sendto(
-            neighborSocket,                //Client socket
-            (void*)stringBuffer,           //String buffer to send to client
-            256,                       //Length of buffer
-            0,                                  //flags
-            (struct sockaddr*)&info->neighborInfo,    //Destination
-            (*sockAddrLength)                 //Length of clientAddress
-    );
     puts("Acquire: about to receive");
 
     length = recvfrom(
@@ -123,7 +115,19 @@ void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t
             sockAddrLength             //Size of source address
     );
 
-    puts("Acquire: receive complete");
+    puts("Acquire: about to send");
+    //do stuff now that I have the token TODO
+
+    sendto(
+            neighborSocket,                //Client socket
+            (void*)stringBuffer,           //String buffer to send to client
+            256,                       //Length of buffer
+            0,                                  //flags
+            (struct sockaddr*)&info->neighborInfo,    //Destination
+            (*sockAddrLength)                 //Length of clientAddress
+    );
+
+    puts("Acquire: send complete");
 }
 
 void OpenSocket(int port, int* mySocket, struct sockaddr_in* sockAddrnInfo)
