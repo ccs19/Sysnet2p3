@@ -17,7 +17,7 @@
 
 pthread_t networkThread; //thread for token passing
 pthread_t mainThread;    //operates the menu
-
+int exitFlag = 0;
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: main
@@ -38,7 +38,6 @@ int main(int argc, const char* argv[])
         printf("Usage: %s <filename> <serverIP> <serverPort>\n", argv[0]);
         return -1;
     }
-
 
     InitBBFile(argv[1]);
 
@@ -61,7 +60,7 @@ int main(int argc, const char* argv[])
     pthread_create(&networkThread, NULL, (void *)InitNetworkThread, (void*)(info));
     //establish ring TODO
     //join threads TODO
-    while(1);
+    while(!exitFlag);
     return 0;
 }
 
@@ -72,6 +71,8 @@ void MenuRunner()
     {
         loop = PrintMenu();
     }
+    puts("end while loop");
+    exitFlag = 1;
 }
 
 void InitNetworkThread(void* pInfo)
@@ -120,7 +121,6 @@ void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t
     );
 
     puts("Acquire: receive complete");
-
 }
 
 void OpenSocket(int port, int* mySocket, struct sockaddr_in* sockAddrnInfo)
@@ -234,8 +234,6 @@ void receiveServerResponse(int socketFD, SendingInfo* response, int size)
         closeSocket(socketFD);
         exit(1);
     }
-
-
 
     printf("Neighbor IP: %s Port: %d\n", 
         inet_ntoa(response->neighborInfo.sin_addr), 
