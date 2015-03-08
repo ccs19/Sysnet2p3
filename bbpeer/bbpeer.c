@@ -29,21 +29,15 @@ int loopMenu = 1;
     @param argv         --  arg vector
  */
 void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
-void serverSetup(const char * nameOfServer, const char * portString, SendingInfo * info);
+void serverSetup(int numArgs, const char * programName, const char * nameOfServer, const char * portString, SendingInfo * info);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int main(int argc, const char* argv[])
 {
-    if(argc != 4)
-    {
-        printf("Usage: %s <filename> <serverIP> <serverPort>\n", argv[0]);
-        return -1;
-    }
-
     InitBBFile(argv[1]);
 
     SendingInfo* info = malloc(sizeof(SendingInfo));
-    serverSetup(argv[2], argv[3], info);
+    serverSetup(argc, argv[0], argv[2], argv[3], info);
 
     pthread_create(&networkThread, NULL, (void *)InitNetworkThread, (void*)(info));
     //establish ring TODO
@@ -54,8 +48,17 @@ int main(int argc, const char* argv[])
     return 0;
 }
 
-void serverSetup(const char * nameOfServer, const char * portString, SendingInfo * info)
+/*
+ * Performs communication with server.
+ */
+void serverSetup(int numArgs, const char * programName, const char * nameOfServer, const char * portString, SendingInfo * info)
 {
+    if(numArgs != 4)
+    {
+        printf("Usage: %s <filename> <serverIP> <serverPort>\n", programName);
+        exit(1);
+    }
+
     int serverSocketFD, serverPortNum;
     struct sockaddr_in serverAddress;
     char serverName[256];
