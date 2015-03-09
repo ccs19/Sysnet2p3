@@ -30,7 +30,7 @@ int loopMenu = 1;
  */
 void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
 void ServerSetup(int numArgs, const char *programName, const char *nameOfServer, const char *portString, SendingInfo *info);
-void ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
+int ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int main(int argc, const char* argv[])
@@ -51,7 +51,7 @@ int main(int argc, const char* argv[])
 /*
  * Chooses first token holder.
  */
-void ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[])
+int ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[])
 {
     srand(time(NULL) + info->exitingMachineInfo.sin_port); //Init random seed
     int myRandomNumber = rand();
@@ -133,7 +133,7 @@ void ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, sock
         printf("Received %d, highest number is %d\n", neighborNumber, highestRandomNumber );
 
         loopNum++;
-
+        return 1;
     }
 }
 
@@ -186,6 +186,7 @@ void InitNetworkThread(void* pInfo)
     SendingInfo* info = (SendingInfo*)pInfo;
     int mySocket;
     int neighborSocket;
+    int done = 0;
     socklen_t sockAddrLength = sizeof(struct sockaddr);
     char stringBuffer[BUFFERSIZE];
     stringBuffer[0] = '\0';
@@ -196,8 +197,8 @@ void InitNetworkThread(void* pInfo)
     neighborSocket = createSocket(inet_ntoa(info->neighborInfo.sin_addr), ntohs(info->neighborInfo.sin_port), &info->neighborInfo);
     sleep(1); //Give time for all peers to open socket
 
-    ChooseTokenHolder(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
-    //mutex for when ChooseTokenHolder is complete TODO
+    done = ChooseTokenHolder(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
+    while(!done){}; //busy wait ChooseTokenHolder is complete TODO
 
     AcquireToken(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
 

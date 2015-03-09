@@ -448,7 +448,7 @@ int ParseUserOption(int* userOption)
 {
     char userOptionString[BUFFERSIZE];
     memset(userOptionString, 0, BUFFERSIZE);
-    fgets(userOptionString, BUFFERSIZE, stdin);   //Get string of data to parse
+    fgets(userOptionString, BUFFERSIZE, stdin);           //Get string of data to parse
     userOptionString[strlen(userOptionString)-1] = '\0';  //And null terminate string
 
     if(strcmp(userOptionString, "write") == 0)
