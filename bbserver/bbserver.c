@@ -117,23 +117,6 @@ void BindSocket()
         ExitOnError("Failed to bind socket"); //If binding of socket fails
 }
 
-/*
- * Receives the server's response formatted as an XML text string.
- *
- * sockfd    - the socket identifier
- * response  - the server's response as an XML formatted string to be filled in by this function into the specified string array
- *
- * return   - 0, if no error; otherwise, a negative number indicating the error
- */
-int receiveHostMessage(int socketFD, char * response, int size)
-{
-    int length = 0;
-    socklen_t bufSize = (socklen_t)size;
-    length = recvfrom(socketFD, response, bufSize, 0, NULL, NULL);
-    response[length] = '\0';
-    return length;
-}
-
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION:   DisplayInfo
     Displays the connection info of the server.

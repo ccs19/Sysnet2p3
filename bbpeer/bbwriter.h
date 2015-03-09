@@ -7,7 +7,6 @@
 
 #include "../common.h"
 
-
 typedef enum
 {
     UpdateFailed,

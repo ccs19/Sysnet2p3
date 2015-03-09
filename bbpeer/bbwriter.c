@@ -4,19 +4,12 @@
  * Project 3
  * Christopher Schneider & Brett Rowberry
  */
+
 #include "bbwriter.h"
 #include "../common.h"
 
 //Globals
 BBFile m_boardFile;
-
-//User options:
-//#define ERROR 0
-//#define WRITE '1'
-//#define READ '2'
-//#define LIST '3'
-//#define EXIT '4'
-//#define INVALID '5'
 
 //Constants
  const char * endXml = "</message>\n";
@@ -28,12 +21,11 @@ BBFile m_boardFile;
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: UpdateFile
 
-    Reads the file and updates the message nextMessageNumber variable.
+    Reads the file and updates the message nextMessageNumber variable. Updates file pointer to bottom of stream.
 
     @return     -- Number of next message. On failure, lastError is set and 0 returned.
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-//Updates file pointer to bottom of stream
 int UpdateFile()
 {
     puts("In UpdateFile");
