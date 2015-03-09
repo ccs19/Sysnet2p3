@@ -65,8 +65,9 @@ void ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, sock
         int neighborNumber;
         if(0 == loopNum) highestRandomNumber = myRandomNumber; //If first time through loop
 
-        if(0 == loopNum ||                              //If first time through the loop
-                highestRandomNumber > myRandomNumber);  //Or forward highest number to neighbor
+        if(0 == loopNum ||                             //If first time through the loop
+                highestRandomNumber > myRandomNumber)  //Or forward highest number to neighbor
+            ;
         {
             printf("Sending %d\n", highestRandomNumber);
             sendto(
