@@ -18,6 +18,14 @@
 
 #define BUFFERSIZE 256
 
+//User options:
+#define ERROR 0
+#define WRITE '1'
+#define READ '2'
+#define LIST '3'
+#define EXIT '4'
+#define INVALID '5'
+//
 //sockaddr_in
 /*
     sin_family -> e.g. AF_INET

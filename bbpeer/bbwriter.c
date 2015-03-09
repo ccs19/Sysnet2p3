@@ -5,18 +5,18 @@
  * Christopher Schneider & Brett Rowberry
  */
 #include "bbwriter.h"
-
+#include "../common.h"
 
 //Globals
 BBFile m_boardFile;
 
 //User options:
-#define ERROR 0
-#define WRITE '1'
-#define READ '2'
-#define LIST '3'
-#define EXIT '4'
-#define INVALID '5'
+//#define ERROR 0
+//#define WRITE '1'
+//#define READ '2'
+//#define LIST '3'
+//#define EXIT '4'
+//#define INVALID '5'
 
 //Constants
  const char * endXml = "</message>\n";
