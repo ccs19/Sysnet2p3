@@ -22,6 +22,7 @@ int loopMenu = 1;
 void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
 void ServerSetup(int numArgs, const char *programName, const char *nameOfServer, const char *portString, SendingInfo *info);
 void ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
+void ExitTokenRing();
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: main
@@ -204,6 +205,11 @@ void InitNetworkThread(void* pInfo)
 
     fflush(stdout);
     pthread_create(&mainThread, NULL, (void*)&MenuRunner, (void*)&(info)); //shouldn't come up until token passing begins
+}
+
+void ExitTokenRing()
+{
+
 }
 
 /*
