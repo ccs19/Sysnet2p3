@@ -8,7 +8,6 @@
 #include <errno.h> // for threading
 #include <signal.h>
 #include <sys/wait.h>
-
 #include <pthread.h>
 #include <semaphore.h>
 #include <sys/types.h>
@@ -302,9 +301,7 @@ void receiveServerResponseAndClose(int socketFD, SendingInfo *response, int size
         exit(1);
     }
 
-    printf("Neighbor IP: %s Port: %d\n", 
-        inet_ntoa(response->neighborInfo.sin_addr), 
-        ntohs(response->neighborInfo.sin_port));
+    PrintSendingInfo(response);
     closeSocket(socketFD);
 }
 
