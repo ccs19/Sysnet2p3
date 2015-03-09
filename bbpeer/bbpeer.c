@@ -198,13 +198,13 @@ void InitNetworkThread(void* pInfo)
     sleep(1); //Give time for all peers to open socket
 
     ChooseTokenHolder(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
+    pthread_create(&mainThread, NULL, (void*)&MenuRunner, (void*)&(info)); //shouldn't come up until token passing begins
     AcquireToken(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
 
     printf("Message: %s\n", stringBuffer);
     PrintSendingInfo(info);
 
     fflush(stdout);
-    pthread_create(&mainThread, NULL, (void*)&MenuRunner, (void*)&(info)); //shouldn't come up until token passing begins
 }
 
 void ExitTokenRing()
