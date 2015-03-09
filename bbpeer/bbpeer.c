@@ -361,17 +361,6 @@ void receiveServerResponseAndClose(int socketFD, SendingInfo *response, int size
 }
 
 /*
- * Prints the response to the screen in a formatted way.
- *
- * response - the server's response as an XML formatted string
- *
- */
-void printResponse(char * response)
-{
-    printf("%s\n",response);
-}
-
-/*
  * Closes the specified socket
  *
  * sockFD - the ID of the socket to be closed

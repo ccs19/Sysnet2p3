@@ -46,14 +46,6 @@ void sendRequest(int, char*, struct sockaddr_in*);
 void receiveServerResponseAndClose(int, SendingInfo *, int);
 
 /*
- * Prints the response to the screen in a formatted way.
- *
- * response - the server's response as an XML formatted string
- *
- */
-void printResponse(char*);
-
-/*
  * Closes the specified socket
  *
  * sockFD - the ID of the socket to be closed
