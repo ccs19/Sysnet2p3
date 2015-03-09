@@ -196,8 +196,8 @@ void InitNetworkThread(void* pInfo)
     neighborSocket = createSocket(inet_ntoa(info->neighborInfo.sin_addr), ntohs(info->neighborInfo.sin_port), &info->neighborInfo);
     sleep(1); //Give time for all peers to open socket
 
-//    AcquireToken(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);  //TODO where to call this?
     ChooseTokenHolder(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
+    AcquireToken(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
 
     printf("Message: %s\n", stringBuffer);
     PrintSendingInfo(info);
@@ -215,25 +215,27 @@ void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t
     puts("Acquire: about to receive");
 
     length = recvfrom(
-            mySocket,                     //Server socket
-            stringBuffer,                     //Buffer for message
-            256,             //Size of buffer
-            0,                                //Flags
+            mySocket,                                     //Sender socket
+            stringBuffer,                                 //Buffer for message
+            256,                                          //Size of buffer
+            0,                                            //Flags
             (struct sockaddr*)&info->exitingMachineInfo,  //Source address
-            sockAddrLength             //Size of source address
+            sockAddrLength                                //Size of source address
     );
 
-    puts("Acquire: about to send");
     //do stuff now that I have the token TODO
     //think about having a queue of commands that gets run when this happens
 
+    puts("Acquire: about to send");
+
+
     sendto(
-            neighborSocket,                //Client socket
-            (void*)stringBuffer,           //String buffer to send to client
-            256,                       //Length of buffer
-            0,                                  //flags
-            (struct sockaddr*)&info->neighborInfo,    //Destination
-            (*sockAddrLength)                 //Length of clientAddress
+            neighborSocket,                               //Client socket
+            (void*)stringBuffer,                          //String buffer to send to client
+            256,                                          //Length of buffer
+            0,                                            //Flags
+            (struct sockaddr*)&info->neighborInfo,        //Destination
+            (*sockAddrLength)                             //Length of clientAddress
     );
 
     puts("Acquire: send complete");
@@ -249,7 +251,7 @@ void OpenSocket(int port, int* mySocket, struct sockaddr_in* sockAddrnInfo)
     if( ( *mySocket =  socket(PF_INET, SOCK_DGRAM, 0) ) <  0)  //If socket fails
         printf("Error creating socket");
 
-    if(gethostname(hostname, sizeof(hostname)) < 0)               //If getting hostname fails
+    if(gethostname(hostname, sizeof(hostname)) < 0)           //If getting hostname fails
         printf("Error acquiring hostname. Exiting");
 
     //InitAddressStruct(port); TODO
