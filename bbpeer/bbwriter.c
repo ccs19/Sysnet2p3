@@ -318,7 +318,7 @@ void InitBBFile(const char *filename)
     m_boardFile.file = OpenFile(filename);
     m_boardFile.nextMessageNumber = UpdateFile();
 
-    printf("in init, next message# = %d\n", m_boardFile.nextMessageNumber); //TODO
+//    printf("in init, next message# = %d\n", m_boardFile.nextMessageNumber); //TODO
 
     if(m_boardFile.nextMessageNumber == 0)
     {

@@ -234,7 +234,7 @@ void DisplayPeerInfo()
     int i = 0;
     for(i = 0; i < numberOfHosts; i++)
     {
-        printf("Peer #%d", i);
+        printf("Peer # %d", i);
         PrintSockaddr_in(&peerInfo[i]);
     }
 }
