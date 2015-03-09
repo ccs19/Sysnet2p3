@@ -22,7 +22,7 @@ int loopMenu = 1;
 void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
 void ServerSetup(int numArgs, const char *programName, const char *nameOfServer, const char *portString, SendingInfo *info);
 void ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
-void ExitTokenRing();
+void ExitTokenRing(SendingInfo * info);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: main
@@ -170,8 +170,9 @@ void ServerSetup(int numArgs, const char *programName, const char *nameOfServer,
 /*
  * Runs the menu endlessly until the peer exits.
  */
-void MenuRunner()
+void MenuRunner(void * pInfo)
 {
+//    SendingInfo* info = (SendingInfo*)pInfo; //TODO probably don't need as file ops should be done by network thread
     int loop = 1;
     while (loop)
     {
@@ -207,9 +208,15 @@ void InitNetworkThread(void* pInfo)
     fflush(stdout);
 }
 
-void ExitTokenRing()
+/*
+ * Handles exiting from ring.
+ */
+void ExitTokenRing(SendingInfo * info)
 {
-
+//    if(info->neighborInfo == info->exitingMachineInfo)
+//    {
+//        info->neighborInfo = info->exitingMachineNeighborInfo;
+//    }
 }
 
 /*
