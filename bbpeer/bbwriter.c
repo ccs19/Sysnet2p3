@@ -444,23 +444,6 @@ int XMLParser( const char* beginXml, const char* endXml, char* clientMessage, ch
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-/*  FUNCTION: EatInputUntilNewLine
-
-    Calls getchar until a newline is found
-    @return number of characters consumed
- */
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-int EatInputUntilNewline()
-{
-    int charCount = 0;
-    while(getchar() != '\n')//Consume newline
-    {
-        ++charCount;
-    }
-    return charCount;
-}
-
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: ParseUserOption
 
     Parses the user's selection and sets the userOption
