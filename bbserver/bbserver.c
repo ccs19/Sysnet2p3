@@ -22,7 +22,7 @@ const int HostNameMaxSize = 256;
 
 int main(int argc, char** argv)
 {
-    OpenSocket(0);
+    OpenSocket(50000);
     printNumberOfHosts(argc, argv[1]);  //get number of desired hosts
     DisplayServerInfo();                //displays info about self
     AcceptConnections();                //captures all peer info
