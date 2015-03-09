@@ -216,6 +216,7 @@ void ExitTokenRing(SendingInfo * info)
 //    if(info->neighborInfo == info->exitingMachineInfo)
 //    {
 //        info->neighborInfo = info->exitingMachineNeighborInfo;
+//        info->machineHasExited = 1;
 //    }
 }
 
@@ -267,7 +268,6 @@ void OpenSocket(int port, int* mySocket, struct sockaddr_in* sockAddrnInfo)
 
     //InitAddressStruct(port); TODO
     BindSocket(mySocket, sockAddrnInfo);
-    
 }
 
 /*void InitAddressStruct(int port)
