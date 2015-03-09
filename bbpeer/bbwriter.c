@@ -256,7 +256,7 @@ int PrintMenu()
              "4. exit   :  Closes the message board\n\n"
              "   Option : ");
     fflush(stdout);
-    int optionResult = GetOption();
+    int optionResult = RunOption();
     if(ERROR == optionResult)           //If something failed
     {
         PrintErrorMessage();        //Print error
@@ -273,14 +273,15 @@ int PrintMenu()
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-/*  FUNCTION: GetOption
+/*  FUNCTION: RunOption
 
     Gets and parses the user's option.
 
     @return     --      EXIT if user selects exit, 0 on error
  */
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-int GetOption() {
+int RunOption()
+{
     int userOption = 0, readOption = 0;
 
     readOption = ParseUserOption(&userOption);

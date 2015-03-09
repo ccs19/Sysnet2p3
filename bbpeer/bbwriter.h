@@ -34,7 +34,7 @@ int ReadFileBySequenceNumber(int);
 int PrintSequenceNumbers();
 FILE * OpenFile(const char*);
 int PrintMenu();
-int GetOption();
+int RunOption();
 void PrintErrorMessage();
 int XMLParser(const char*, const char*, char*, char*, int);
 void InitBBFile(const char *);
