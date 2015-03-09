@@ -197,6 +197,8 @@ void InitNetworkThread(void* pInfo)
     sleep(1); //Give time for all peers to open socket
 
     ChooseTokenHolder(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
+    //mutex for when ChooseTokenHolder is complete TODO
+
     AcquireToken(info, mySocket, neighborSocket, &sockAddrLength, stringBuffer);
 
     printf("Message: %s\n", stringBuffer);
@@ -223,11 +225,9 @@ void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t
             sockAddrLength                                //Size of source address
     );
 
-    //do stuff now that I have the token TODO
-    //think about having a queue of commands that gets run when this happens
+    //switch case checks global set by menu in main/user thread and then runs corresponding function TODO
 
     puts("Acquire: about to send");
-
 
     sendto(
             neighborSocket,                               //Client socket
