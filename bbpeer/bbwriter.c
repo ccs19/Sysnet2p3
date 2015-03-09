@@ -100,7 +100,7 @@ int WriteFile()
     OpenFile(m_boardFile.fileName);         //OPEN
     m_boardFile.nextMessageNumber = UpdateFile();                   //Get number of next message
 
-    printf("in write, next message number = %d\n", m_boardFile.nextMessageNumber); //TODO
+//    printf("in write, next message number = %d\n", m_boardFile.nextMessageNumber); //TODO
 
     fseek(m_boardFile.file, 0, SEEK_END);                       //Update file pointer
 
@@ -133,7 +133,7 @@ int ReadFileBySequenceNumber(int sequenceNumber)
     OpenFile(m_boardFile.fileName);
 
     m_boardFile.nextMessageNumber = UpdateFile();                            //Update next message number TODO
-    printf("in read, next message number = %d\n", m_boardFile.nextMessageNumber); //TODO
+//    printf("in read, next message number = %d\n", m_boardFile.nextMessageNumber); //TODO
 
     if(sequenceNumber < m_boardFile.nextMessageNumber && sequenceNumber > 0) //Check sequence number exists and > 0
     {
@@ -193,7 +193,7 @@ int PrintSequenceNumbers()
     OpenFile(m_boardFile.fileName); //OPEN
     m_boardFile.nextMessageNumber = UpdateFile();
 
-    printf("in print seq numbers, next message # = %d\n", m_boardFile.nextMessageNumber); //TODO
+//    printf("in print seq numbers, next message # = %d\n", m_boardFile.nextMessageNumber); //TODO
 
     if(m_boardFile.nextMessageNumber == 0)
     {

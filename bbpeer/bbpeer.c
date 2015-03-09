@@ -190,7 +190,6 @@ void InitNetworkThread(void* pInfo)
     socklen_t sockAddrLength = sizeof(struct sockaddr);
     char stringBuffer[BUFFERSIZE];
     stringBuffer[0] = '\0';
-//    strcat(stringBuffer, "Hello!"); //TODO delete
 
     //Init sockets
     OpenSocket(0, &mySocket, &info->exitingMachineInfo);
