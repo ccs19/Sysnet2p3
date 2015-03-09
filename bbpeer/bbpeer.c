@@ -19,6 +19,10 @@ pthread_t networkThread; //thread for token passing
 pthread_t mainThread;    //operates the menu
 int loopMenu = 1;
 
+void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
+void ServerSetup(int numArgs, const char *programName, const char *nameOfServer, const char *portString, SendingInfo *info);
+void ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
+
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*  FUNCTION: main
 
@@ -28,9 +32,6 @@ int loopMenu = 1;
     @param argc         --  number of args
     @param argv         --  arg vector
  */
-void AcquireToken(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
-void ServerSetup(int numArgs, const char *programName, const char *nameOfServer, const char *portString, SendingInfo *info);
-void ChooseTokenHolder(SendingInfo *info, int mySocket, int neighborSocket, socklen_t *sockAddrLength, char stringBuffer[]);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 int main(int argc, const char* argv[])
